@@ -1,0 +1,50 @@
+groups:
+  - name: flight-delay-api
+    rules:
+      - record: job:http_requests:rate5m
+        expr: sum by (job) (rate(http_requests_total[5m]))
+
+      - record: job:http_5xx_ratio:rate5m
+        expr: >-
+          sum by (job) (rate(http_requests_total{status=~"5.."}[5m]))
+          /
+          clamp_min(sum by (job) (rate(http_requests_total[5m])), 0.001)
+
+      - record: job_route:http_request_duration_seconds:p95_5m
+        expr: >-
+          histogram_quantile(
+            0.95,
+            sum by (job, route, le) (rate(http_request_duration_seconds_bucket[5m]))
+          )
+
+      - alert: FlightDelayServiceDown
+        expr: up{job="flight-delay-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: mlops-course
+        annotations:
+          summary: Flight delay API is unavailable
+          runbook: docs/runbooks/flight-delay-api.md
+
+      - alert: FlightDelayHigh5xxRatio
+        expr: job:http_5xx_ratio:rate5m{job="flight-delay-api"} > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          team: mlops-course
+        annotations:
+          summary: More than 5 percent of requests return 5xx
+          runbook: docs/runbooks/flight-delay-api.md
+
+      - alert: FlightDelayHighP95Latency
+        expr: >-
+          max(job_route:http_request_duration_seconds:p95_5m{job="flight-delay-api"})
+          > 0.5
+        for: 2m
+        labels:
+          severity: warning
+          team: mlops-course
+        annotations:
+          summary: API p95 latency is above 500 ms
+          runbook: docs/runbooks/flight-delay-api.md

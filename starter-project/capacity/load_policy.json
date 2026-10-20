@@ -1,0 +1,16 @@
+{
+  "policy_version": "1.0.0",
+  "required_scenarios": ["steady", "burst"],
+  "minimum_requests_per_scenario": 20,
+  "maximum_error_rate": 0.02,
+  "maximum_p95_seconds": {
+    "steady": 0.25,
+    "burst": 0.45
+  },
+  "maximum_recovery_seconds": 30,
+  "baseline_replicas": 2,
+  "maximum_replicas": 6,
+  "estimated_replica_hour_cost": 0.04,
+  "monthly_hours": 730,
+  "cost_currency": "условные единицы"
+}

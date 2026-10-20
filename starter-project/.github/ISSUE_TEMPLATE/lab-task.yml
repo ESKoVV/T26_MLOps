@@ -1,0 +1,44 @@
+name: Задача лабораторной работы
+description: Индивидуальная задача участника с проверяемым результатом
+title: "[ЛР]: "
+labels:
+  - laboratory
+body:
+  - type: input
+    id: lab
+    attributes:
+      label: Номер лабораторной
+      placeholder: ЛР1
+    validations:
+      required: true
+  - type: input
+    id: owner
+    attributes:
+      label: Ответственный участник
+      placeholder: GitHub login
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Наблюдаемый результат
+      description: Что появится или изменится после выполнения задачи
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Критерии приемки
+      description: Как другой участник проверит результат
+      placeholder: |
+        - [ ] Проверка 1
+        - [ ] Проверка 2
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Риск или ограничение
+      description: Что может пойти неверно и как это обнаружить
+    validations:
+      required: true

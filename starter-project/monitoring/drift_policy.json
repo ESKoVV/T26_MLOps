@@ -1,0 +1,14 @@
+{
+  "policy_version": "1.0.0",
+  "minimum_window_rows": 8,
+  "psi_warning": 0.1,
+  "psi_alert": 0.25,
+  "expected_label_delay_hours": 24,
+  "minimum_labeled_rows": 8,
+  "minimum_label_coverage": 0.75,
+  "minimum_roc_auc": 0.7,
+  "minimum_f1": 0.6,
+  "owner": "team-quality-observability",
+  "review_required": true,
+  "automatic_retraining": false
+}

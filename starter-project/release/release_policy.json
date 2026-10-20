@@ -1,0 +1,13 @@
+{
+  "policy_version": "1.0.0",
+  "required_gates": [
+    "data_contract",
+    "point_in_time_features",
+    "monitoring_decision",
+    "responsible_ai",
+    "capacity",
+    "model_card",
+    "security"
+  ],
+  "allowed_gate_statuses": ["pass", "accepted_with_investigation"]
+}

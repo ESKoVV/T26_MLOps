@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mlops-flight-delay-starter"
+version = "1.1.0"
+description = "Учебный MLOps проект для прогноза задержки рейса"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.115,<1",
+  "joblib>=1.4,<2",
+  "pandas>=2.2,<3",
+  "prometheus-client>=0.26,<1",
+  "scikit-learn>=1.5,<2",
+  "uvicorn[standard]>=0.32,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx>=0.28,<1",
+  "pytest>=8.3,<9",
+  "ruff>=0.8,<1",
+]
+data = [
+  "dvc>=3,<4",
+]
+tracking = [
+  "mlflow>=3.16,<4",
+]
+orchestration = [
+  "prefect>=3.8,<4",
+]
+monitoring = [
+  "evidently>=0.7.23,<0.8",
+]
+feature_store = [
+  "feast>=0.67,<0.68",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+

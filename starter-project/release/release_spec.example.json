@@ -1,0 +1,61 @@
+{
+  "release_version": "1.1.0",
+  "evaluation_date": "2026-10-20",
+  "source_commit": "0123456789abcdef0123456789abcdef01234567",
+  "data": {
+    "contract_version": "2.0.0",
+    "dataset": "flight-delay-training-sample"
+  },
+  "model": {
+    "name": "team-example-flight-delay-classifier",
+    "version": "1",
+    "alias": "champion",
+    "resolved_uri": "models:/team-example-flight-delay-classifier/1",
+    "mlflow_run_id": "replace-with-actual-run-id"
+  },
+  "image": {
+    "ref": "flight-delay-api:0123456789abcdef0123456789abcdef01234567",
+    "identity_kind": "immutable_commit_tag"
+  },
+  "api": {
+    "openapi_version": "1.1.0",
+    "compatibility": "backward-compatible"
+  },
+  "ci": {
+    "status": "not_executed_local_example",
+    "run_url": null
+  },
+  "gates": [
+    {"name": "data_contract", "status": "pass", "path": "data/contract.json"},
+    {"name": "point_in_time_features", "status": "pass", "path": "reports/features/lr13-example/audit.json"},
+    {
+      "name": "monitoring_decision",
+      "status": "accepted_with_investigation",
+      "path": "reports/monitoring/lr12-example.json",
+      "exception": {
+        "owner": "course-instructor",
+        "expires_at": "2026-11-30",
+        "reason": "Drift требует расследования, но подтверждённой деградации качества нет"
+      }
+    },
+    {"name": "responsible_ai", "status": "pass", "path": "reports/governance/lr14-example.json"},
+    {"name": "capacity", "status": "pass", "path": "reports/capacity/lr15-example.json"},
+    {"name": "model_card", "status": "pass", "path": "docs/model-card.md"},
+    {"name": "security", "status": "pass", "path": "docs/security/threat-model.md"}
+  ],
+  "approvals": {
+    "prepared_by": "course-template",
+    "approved_by": null,
+    "approved_at": null
+  },
+  "rollback": {
+    "previous_model_version": "0",
+    "previous_image_ref": "flight-delay-api:previous-verified-tag",
+    "trigger": "SLO breach, critical security finding or invalid release identity",
+    "procedure": "Move champion alias to exact previous version and redeploy previous immutable image"
+  },
+  "limitations": [
+    "Учебный синтетический набор не представляет реальный воздушный трафик",
+    "Kubernetes и LLMOps проверяются на обзорном уровне"
+  ]
+}

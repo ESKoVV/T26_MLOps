@@ -1,0 +1,171 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install project and quality tools
+        run: python -m pip install -e ".[dev,tracking,orchestration]"
+
+      - name: Lint
+        run: python -m ruff check .
+
+      - name: Check formatting
+        run: python -m ruff format --check .
+
+      - name: Validate data contract
+        run: >-
+          python -m mlops_flight_delay.validate_data
+          --data data/flights_sample.csv
+          --contract data/contract.json
+          --report reports/validation/ci.json
+
+      - name: Run tests
+        run: python -m pytest -q --junitxml=reports/tests/ci.xml
+
+      - name: Export OpenAPI contract
+        run: python scripts/export_openapi.py --output reports/openapi/ci-openapi.json
+
+      - name: Train smoke model
+        run: >-
+          python -m mlops_flight_delay.train
+          --data data/flights_sample.csv
+          --model models/model.joblib
+
+      - name: Run Prefect flow smoke
+        run: >-
+          python -m mlops_flight_delay.orchestration
+          --data data/flights_sample.csv
+          --contract data/contract.json
+          --run-dir reports/prefect/ci
+          --model models/prefect-ci.joblib
+
+      - name: Register MLflow candidate smoke
+        run: >-
+          python -m mlops_flight_delay.registry register
+          --tracking-uri sqlite:////tmp/mlflow-ci.db
+          --model-name ci-flight-delay-classifier
+          --owner-team ci
+          --model models/prefect-ci.joblib
+          --data reports/prefect/ci/prepared.csv
+          --summary reports/prefect/ci/run-summary.json
+          --source-commit ${{ github.sha }}
+          --minimum-roc-auc 0.5
+          --output reports/registry/ci-candidate.json
+
+      - name: Promote MLflow candidate smoke
+        run: >-
+          python -m mlops_flight_delay.registry promote
+          --tracking-uri sqlite:////tmp/mlflow-ci.db
+          --model-name ci-flight-delay-classifier
+          --data reports/prefect/ci/prepared.csv
+          --approved-by ci
+          --output reports/releases/ci-release.json
+
+      - name: Build drift and delayed-quality report
+        run: >-
+          python -m mlops_flight_delay.monitoring
+          --reference data/monitoring/reference.csv
+          --current data/monitoring/current.csv
+          --predictions data/monitoring/predictions.csv
+          --labels data/monitoring/labels.csv
+          --policy monitoring/drift_policy.json
+          --as-of 2026-10-20T12:00:00Z
+          --output reports/monitoring/lr12-ci.json
+
+      - name: Audit point-in-time feature join
+        run: >-
+          python -m mlops_flight_delay.features
+          --entities data/features/entities.csv
+          --history data/features/history.csv
+          --contract features/feature_contract.json
+          --output-dir reports/features/lr13-ci
+
+      - name: Audit responsible-ML release evidence
+        run: >-
+          python -m mlops_flight_delay.governance
+          --evaluation data/governance/evaluation.csv
+          --policy governance/responsible_ai_policy.json
+          --model-card docs/model-card.md
+          --output reports/governance/lr14-ci.json
+
+      - name: Analyze capacity evidence
+        run: >-
+          python -m mlops_flight_delay.capacity
+          --results data/capacity/lr15_sample.json
+          --policy capacity/load_policy.json
+          --output reports/capacity/lr15-ci.json
+          --enforce
+
+      - name: Build and verify release manifest draft
+        run: >-
+          python -m mlops_flight_delay.release build
+          --spec release/release_spec.example.json
+          --policy release/release_policy.json
+          --output reports/releases/lr16-draft.json
+
+      - name: Upload quality evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-evidence-${{ github.run_id }}
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 14
+
+  container:
+    name: container
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Validate Compose configuration
+        env:
+          GRAFANA_ADMIN_PASSWORD: ci-not-for-deployment
+        run: docker compose config --quiet
+
+      - name: Validate Prometheus configuration and rules
+        run: >-
+          docker run --rm
+          --entrypoint promtool
+          --volume "${{ github.workspace }}/observability/prometheus:/etc/prometheus:ro"
+          prom/prometheus:v3.15.0
+          check config /etc/prometheus/prometheus.yml
+
+      - name: Build immutable image tag
+        run: docker build --tag mlops-flight-delay:${{ github.sha }} .

@@ -1,0 +1,65 @@
+{
+  "policy_version": "1.0.0",
+  "status": "pass",
+  "scope": {
+    "group_column": "IsWeekend",
+    "statement": "IsWeekend — учебный операционный сегмент; результат не является доказательством справедливости для защищённых или уязвимых групп."
+  },
+  "threshold": 0.5,
+  "overall": {
+    "rows": 12,
+    "positive_rate": 0.5,
+    "predicted_positive_rate": 0.5,
+    "precision": 0.8333333333333334,
+    "recall": 0.8333333333333334,
+    "f1": 0.8333333333333334,
+    "roc_auc": 0.9722222222222223
+  },
+  "groups": {
+    "0": {
+      "rows": 6,
+      "positive_rate": 0.5,
+      "predicted_positive_rate": 0.3333333333333333,
+      "precision": 1.0,
+      "recall": 0.6666666666666666,
+      "f1": 0.8,
+      "roc_auc": 1.0,
+      "status": "reported"
+    },
+    "1": {
+      "rows": 6,
+      "positive_rate": 0.5,
+      "predicted_positive_rate": 0.6666666666666666,
+      "precision": 0.75,
+      "recall": 1.0,
+      "f1": 0.8571428571428571,
+      "roc_auc": 1.0,
+      "status": "reported"
+    }
+  },
+  "f1_gap": 0.05714285714285705,
+  "checks": {
+    "minimum_overall_f1": true,
+    "maximum_f1_gap": true,
+    "enough_groups": true,
+    "model_card_complete": true
+  },
+  "model_card": {
+    "path": "docs/model-card.md",
+    "required_sections": [
+      "Краткое описание",
+      "Назначение",
+      "Недопустимое использование",
+      "Модель и данные",
+      "Оценка качества",
+      "Групповые метрики",
+      "Ограничения и риски",
+      "Мониторинг и реакция",
+      "Безопасность и конфиденциальность",
+      "Надзор человека",
+      "Владелец и журнал изменений"
+    ],
+    "missing_sections": [],
+    "status": "pass"
+  }
+}

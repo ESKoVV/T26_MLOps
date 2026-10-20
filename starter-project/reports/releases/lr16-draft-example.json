@@ -1,0 +1,94 @@
+{
+  "schema_version": "1.0.0",
+  "release_status": "draft",
+  "release_version": "1.1.0",
+  "evaluation_date": "2026-10-20",
+  "source_commit": "0123456789abcdef0123456789abcdef01234567",
+  "data": {
+    "contract_version": "2.0.0",
+    "dataset": "flight-delay-training-sample"
+  },
+  "model": {
+    "name": "team-example-flight-delay-classifier",
+    "version": "1",
+    "alias": "champion",
+    "resolved_uri": "models:/team-example-flight-delay-classifier/1",
+    "mlflow_run_id": "replace-with-actual-run-id"
+  },
+  "image": {
+    "ref": "flight-delay-api:0123456789abcdef0123456789abcdef01234567",
+    "identity_kind": "immutable_commit_tag"
+  },
+  "api": {
+    "openapi_version": "1.1.0",
+    "compatibility": "backward-compatible"
+  },
+  "ci": {
+    "status": "not_executed_local_example",
+    "run_url": null
+  },
+  "evidence": [
+    {
+      "name": "data_contract",
+      "status": "pass",
+      "path": "data/contract.json",
+      "sha256": "e4f670d9bd909d8c344598fadce9d751781bc0f9f6c05ecae13b1c3c8e412760"
+    },
+    {
+      "name": "point_in_time_features",
+      "status": "pass",
+      "path": "reports/features/lr13-example/audit.json",
+      "sha256": "f12cab31d405796396c60ebe15af527c1fa1c68786a7743a1d9070d1a5ca8dfc"
+    },
+    {
+      "name": "monitoring_decision",
+      "status": "accepted_with_investigation",
+      "path": "reports/monitoring/lr12-example.json",
+      "sha256": "ee7c3afb15511475eda3ca541114cc892074279579e13f05e3a406aee6b96ac7",
+      "exception": {
+        "owner": "course-instructor",
+        "expires_at": "2026-11-30",
+        "reason": "Drift требует расследования, но подтверждённой деградации качества нет"
+      }
+    },
+    {
+      "name": "responsible_ai",
+      "status": "pass",
+      "path": "reports/governance/lr14-example.json",
+      "sha256": "b78cf07eac69d2283773b9d2da23226f5c1cb5e19991ac87758841f35f65977a"
+    },
+    {
+      "name": "capacity",
+      "status": "pass",
+      "path": "reports/capacity/lr15-example.json",
+      "sha256": "718d7c2ba7b0b88f36bb377c84edd13d52dcf5f0105db29f7652d4fdd90e6f64"
+    },
+    {
+      "name": "model_card",
+      "status": "pass",
+      "path": "docs/model-card.md",
+      "sha256": "fa9b97101d11ece583d843df0a5baff6447c3ded8daac109b3a0a42557714948"
+    },
+    {
+      "name": "security",
+      "status": "pass",
+      "path": "docs/security/threat-model.md",
+      "sha256": "a11f0cc607db8483e0ef16cddd0e8e9a78e40a8ec03a025d8199326f77140428"
+    }
+  ],
+  "approvals": {
+    "prepared_by": "course-template",
+    "approved_by": null,
+    "approved_at": null
+  },
+  "rollback": {
+    "previous_model_version": "0",
+    "previous_image_ref": "flight-delay-api:previous-verified-tag",
+    "trigger": "SLO breach, critical security finding or invalid release identity",
+    "procedure": "Move champion alias to exact previous version and redeploy previous immutable image"
+  },
+  "limitations": [
+    "Учебный синтетический набор не представляет реальный воздушный трафик",
+    "Kubernetes и LLMOps проверяются на обзорном уровне"
+  ]
+}

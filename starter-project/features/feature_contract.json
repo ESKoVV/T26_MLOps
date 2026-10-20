@@ -1,0 +1,14 @@
+{
+  "contract_version": "1.0.0",
+  "entity_key": "airport_id",
+  "event_timestamp": "event_time",
+  "feature_timestamp": "feature_time",
+  "available_timestamp": "available_time",
+  "features": [
+    "trailing_delay_rate",
+    "flights_last_24h"
+  ],
+  "ttl_hours": 48,
+  "maximum_missing_rate": 0.0,
+  "owner": "team-feature-platform"
+}

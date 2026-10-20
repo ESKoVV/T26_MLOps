@@ -1,0 +1,47 @@
+{
+  "contract_version": "2.0.0",
+  "dataset": "flight-delay-training-sample",
+  "description": "Обезличенный учебный набор для прогноза задержки прибытия рейса",
+  "owner": "student-team",
+  "source": {
+    "type": "course-provided-synthetic-sample",
+    "uri": "data/flights_sample.csv",
+    "license": "Только для учебного использования в курсе MLOps 2026-2027",
+    "collected_at": null
+  },
+  "minimum_rows": 20,
+  "allow_extra_columns": false,
+  "duplicate_rows": "forbid",
+  "columns": {
+    "FlightDate": {
+      "role": "event_time",
+      "type": "date",
+      "format": "%Y-%m-%d",
+      "nullable": false,
+      "description": "Дата рейса для хронологического разбиения"
+    },
+    "DepHour": {
+      "role": "feature",
+      "type": "integer",
+      "nullable": false,
+      "minimum": 0,
+      "maximum": 23,
+      "description": "Час отправления по местному времени"
+    },
+    "IsWeekend": {
+      "role": "feature",
+      "type": "integer",
+      "nullable": false,
+      "allowed_values": [0, 1],
+      "description": "Признак выходного дня"
+    },
+    "ArrDelay": {
+      "role": "target_source",
+      "type": "integer",
+      "nullable": false,
+      "minimum": -180,
+      "maximum": 1440,
+      "description": "Задержка прибытия в минутах; целевой класс строится условием ArrDelay >= 15"
+    }
+  }
+}

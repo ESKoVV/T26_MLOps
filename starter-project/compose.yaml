@@ -1,0 +1,70 @@
+services:
+  app:
+    build:
+      context: .
+      target: runtime
+    image: mlops-flight-delay:${IMAGE_TAG:-lr6-local}
+    init: true
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:8080"
+    environment:
+      MODEL_PATH: /app/models/model.joblib
+      MODEL_NAME: ${MODEL_NAME:-flight-delay-classifier}
+      MODEL_VERSION: ${MODEL_VERSION:-local}
+      SOURCE_COMMIT: ${SOURCE_COMMIT:-unknown}
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/readyz', timeout=2)"
+      interval: 10s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=2d
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus/rules.yml:/etc/prometheus/rules.yml:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /prometheus:size=128m,uid=65534,gid=65534,mode=0770
+    security_opt:
+      - no-new-privileges:true
+
+  grafana:
+    image: grafana/grafana-oss:13.2.4
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    read_only: true
+    tmpfs:
+      - /var/lib/grafana:size=64m,uid=472,gid=0,mode=0770
+      - /var/log/grafana:size=16m,uid=472,gid=0,mode=0770
+    security_opt:
+      - no-new-privileges:true
