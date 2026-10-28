@@ -51,3 +51,29 @@ def test_duplicate_request_id_is_rejected() -> None:
     duplicated = pd.concat([entities, entities.iloc[[0]]], ignore_index=True)
     with pytest.raises(ValueError, match="request_id"):
         point_in_time_join(duplicated, history, CONTRACT)
+
+
+def test_audit_fails_when_coverage_is_below_contract() -> None:
+    contract = CONTRACT
+    entities = pd.DataFrame(
+        {
+            "request_id": ["r1", "r2"],
+            "airport_id": ["A", "Z"],  # Z has no history -> missing feature
+            "event_time": ["2026-10-02T08:00:00Z", "2026-10-02T08:00:00Z"],
+        }
+    )
+    history = pd.DataFrame(
+        {
+            "airport_id": ["A"],
+            "feature_time": ["2026-10-01T12:00:00Z"],
+            "available_time": ["2026-10-01T12:30:00Z"],
+            "trailing_delay_rate": [0.3],
+            "flights_last_24h": [90],
+        }
+    )
+    naive = naive_latest_join(entities, history, contract)
+    correct = point_in_time_join(entities, history, contract)
+    audit = build_feature_audit(entities, naive, correct, contract)
+    assert audit["missing_rate"] == 0.5
+    assert audit["failures"] == ["missing_rate_above_contract"]
+    assert audit["status"] == "fail"
