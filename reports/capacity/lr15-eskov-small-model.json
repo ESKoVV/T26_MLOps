@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0.0",
+  "status": "pass",
+  "service_version": "1.1.0",
+  "image_ref": "uvicorn-local:ea0e15f",
+  "student_id": "eskov-small-model",
+  "scenarios": {
+    "steady": {
+      "requests": 200,
+      "successes": 200,
+      "errors": 0,
+      "throughput_rps": 225.12763594481717,
+      "error_rate": 0.0,
+      "p50_seconds": 0.007813955002347939,
+      "p95_seconds": 0.014030850998096867,
+      "max_seconds": 0.020390872999996645
+    },
+    "burst": {
+      "requests": 200,
+      "successes": 200,
+      "errors": 0,
+      "throughput_rps": 158.36472972811814,
+      "error_rate": 0.0,
+      "p50_seconds": 0.05474237000089488,
+      "p95_seconds": 0.11239251699953456,
+      "max_seconds": 0.1377358550016652
+    }
+  },
+  "recovery_seconds": 1.0159640279998712,
+  "checks": {
+    "steady_sample_size": true,
+    "steady_error_rate": true,
+    "steady_p95": true,
+    "burst_sample_size": true,
+    "burst_error_rate": true,
+    "burst_p95": true,
+    "recovery_time": true
+  },
+  "decision": {
+    "action": "keep_baseline",
+    "baseline_replicas": 2,
+    "candidate_replicas": 2,
+    "statement": "Сначала подтвердить bottleneck профилированием; увеличение replicas не является автоматическим следствием одного превышенного p95."
+  },
+  "illustrative_cost": {
+    "currency": "условные единицы",
+    "assumption": "Учебная оценка, не коммерческое предложение облачного провайдера.",
+    "baseline_monthly": 58.4,
+    "candidate_monthly": 58.4
+  }
+}
