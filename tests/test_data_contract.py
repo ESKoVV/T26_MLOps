@@ -198,13 +198,21 @@ def test_dvc_pointer_mismatch_is_detected(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("column", "value", "check_name"),
     [
+        ("DepHour", 24, "DepHour.maximum"),
         ("DepHour", 25, "DepHour.maximum"),
         ("DepHour", -1, "DepHour.minimum"),
         ("IsWeekend", 2, "IsWeekend.allowed_values"),
         ("FlightDate", "bad-date", "FlightDate.date"),
         ("ArrDelay", -181, "ArrDelay.minimum"),
     ],
-    ids=["hour-25", "hour-minus-1", "weekend-2", "date-text", "delay-below-min"],
+    ids=[
+        "hour-24-boundary",
+        "hour-25",
+        "hour-minus-1",
+        "weekend-2",
+        "date-text",
+        "delay-below-min",
+    ],
 )
 def test_invalid_sample_values_are_rejected(
     valid_frame, csv_factory, column, value, check_name
