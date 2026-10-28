@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "created_at": "2026-10-28T16:21:58.215832+00:00",
+  "model_name": "team-3-flight-delay-classifier",
+  "model_version": "2",
+  "previous_champion_version": "1",
+  "mlflow_run_id": "2593fe01196a44a19583b2874818c3a1",
+  "source_commit": "5a25637d740bb4ad65c4d9d3ec6dc4ddb116fb02",
+  "data_sha256": "78721daf85b396674e95464ca6aae151dedc7db86c480d5aef881ab4187fcace",
+  "resolved_model_uri": "models:/team-3-flight-delay-classifier/2",
+  "quality_gate": {
+    "passed": true,
+    "minimum_roc_auc": 0.55,
+    "roc_auc": 0.6311192536275625
+  },
+  "decision": {
+    "status": "approved",
+    "approved_by": "ESKoVV",
+    "review": "self-drill"
+  }
+}
