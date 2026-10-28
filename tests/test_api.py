@@ -84,4 +84,3 @@ def test_openapi_documents_request_response_and_errors(tmp_path: Path) -> None:
     assert operation["responses"]["200"]["content"]["application/json"]
     assert operation["responses"]["422"]["content"]["application/json"]
     assert operation["responses"]["503"]["content"]["application/json"]
-

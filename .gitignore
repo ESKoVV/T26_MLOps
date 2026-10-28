@@ -10,3 +10,7 @@ mlflow.db
 .env
 models/*.joblib
 
+*.egg-info/
+reports/validation/
+reports/tests/
+reports/openapi/ci-openapi.json

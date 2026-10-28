@@ -10,9 +10,13 @@ COPY src ./src
 COPY tests ./tests
 COPY data ./data
 
+# The image gate runs the tests of components that ship in the runtime image. The full suite
+# (registry, orchestration, governance, release ...) needs extras and repo files outside this
+# context and runs in the CI quality job, which the container job depends on.
 RUN python -m pip install --no-cache-dir ".[dev]" \
     && python -m ruff check src tests \
-    && python -m pytest -q \
+    && python -m pytest -q tests/test_api.py tests/test_data_contract.py tests/test_evaluate.py \
+        tests/test_observability.py tests/test_pipeline.py tests/test_train.py \
     && python -m mlops_flight_delay.validate_data \
         --data data/flights_sample.csv \
         --contract data/contract.json \
