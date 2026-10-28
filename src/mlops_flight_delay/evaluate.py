@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os  # LR8 controlled failure: unused import, expected to fail the Lint step
 from collections.abc import Sequence
 
 import numpy as np
