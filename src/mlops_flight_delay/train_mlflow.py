@@ -15,7 +15,7 @@ from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_sco
 
 from mlops_flight_delay.split import SPLIT_POLICY, chronological_bounds, sort_by_event_time
 from mlops_flight_delay.train import FEATURES, train_model
-from mlops_flight_delay.validate_data import validate_dataset
+from mlops_flight_delay.validate_data import read_dvc_md5, validate_dataset
 
 
 def _git(args: list[str], default: str = "unknown") -> str:
@@ -31,10 +31,7 @@ def _dvc_hash(data_path: Path) -> str:
     metafile = data_path.with_suffix(data_path.suffix + ".dvc")
     if not metafile.exists():
         return "not-tracked"
-    for line in metafile.read_text(encoding="utf-8").splitlines():
-        if line.strip().startswith("md5:"):
-            return line.split(":", 1)[1].strip()
-    return "unknown"
+    return read_dvc_md5(metafile) or "unknown"
 
 
 def run_experiment(
@@ -83,6 +80,8 @@ def run_experiment(
                 recall_score(validation_target, predictions, zero_division=0)
             ),
             "validation_f1": float(f1_score(validation_target, predictions, zero_division=0)),
+            "validation_positive_rate": float(validation_target.mean()),
+            "validation_mean_probability": float(probabilities.mean()),
         }
         split_manifest = {
             "policy": SPLIT_POLICY,

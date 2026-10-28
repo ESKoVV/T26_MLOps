@@ -55,3 +55,15 @@ def test_contract_violation_stops_run(tracking, tmp_path: Path, contract_path: P
     broken.write_text("FlightDate,DepHour\n2026-01-01,25\n", encoding="utf-8")
     with pytest.raises(ValueError, match="контракт"):
         run_experiment(broken, contract_path, "test-flight-delay", 10, 2, 1)
+
+
+def test_dvc_hash_is_read_from_dvc3_pointer(tmp_path: Path) -> None:
+    from mlops_flight_delay.train_mlflow import _dvc_hash
+
+    data = tmp_path / "data.csv"
+    data.write_text("x\n", encoding="utf-8")
+    (tmp_path / "data.csv.dvc").write_text(
+        "outs:\n- md5: 89511bf17a122596d2b7a21f6a2925ac\n  size: 1\n  path: data.csv\n",
+        encoding="utf-8",
+    )
+    assert _dvc_hash(data) == "89511bf17a122596d2b7a21f6a2925ac"

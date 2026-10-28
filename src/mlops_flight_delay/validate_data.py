@@ -46,14 +46,18 @@ def chronological_split_summary(
     return summary
 
 
-def dvc_pointer_check(data_path: Path, dvc_file: Path) -> dict[str, Any]:
-    """Compare the working file with the md5 recorded in its .dvc pointer."""
-    recorded = None
+def read_dvc_md5(dvc_file: Path) -> str | None:
+    """Return the md5 of the first output in a .dvc pointer (DVC 3 writes '- md5: ...')."""
     for line in dvc_file.read_text(encoding="utf-8").splitlines():
         stripped = line.strip().removeprefix("- ")
         if stripped.startswith("md5:"):
-            recorded = stripped.split(":", 1)[1].strip()
-            break
+            return stripped.split(":", 1)[1].strip()
+    return None
+
+
+def dvc_pointer_check(data_path: Path, dvc_file: Path) -> dict[str, Any]:
+    """Compare the working file with the md5 recorded in its .dvc pointer."""
+    recorded = read_dvc_md5(dvc_file)
     actual = hashlib.md5(data_path.read_bytes()).hexdigest()
     return _check(
         "dvc.md5_matches",
