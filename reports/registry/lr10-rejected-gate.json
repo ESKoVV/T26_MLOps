@@ -1,0 +1,8 @@
+{
+  "schema_version": "1.0.0",
+  "created_at": "2026-10-28T16:21:56.112654+00:00",
+  "status": "failed",
+  "command": "register",
+  "error_type": "ValueError",
+  "message": "Quality gate failed: ROC AUC 0.631 < 0.650"
+}
