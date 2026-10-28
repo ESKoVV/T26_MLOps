@@ -1,6 +1,12 @@
-# Flight Delay MLOps starter
+# Flight Delay MLOps — команда team-3
 
-Базовый проект для последовательного выполнения лабораторных работ курса MLOps 2026–2027.
+Учебный проект курса «Управление процессами машинного обучения (MLOps)» 2026–2027, ДГТУ, группа Т.МО41.
+Прогноз задержки прибытия рейса не менее чем на 15 минут за 60 минут до планового отправления.
+
+- Тимлид: Еськов Владимир (@ESKoVV). Состав и роли: [docs/team-roles.md](docs/team-roles.md).
+- Границы проекта: [ADR 0001](docs/adr/0001-project-boundaries.md).
+- Правила веток, PR и review: [CONTRIBUTING.md](CONTRIBUTING.md).
+- Ветка команды у преподавателя: `Irina-64/T26_MLOps:team-3`.
 
 ## Быстрый старт
 
@@ -14,6 +20,17 @@ uvicorn mlops_flight_delay.api:app --host 0.0.0.0 --port 8080
 ```
 
 Перед установкой активируйте окружение: `.venv\Scripts\Activate.ps1` в Windows PowerShell или `source .venv/bin/activate` в Linux и macOS.
+
+Нужен Python 3.12 (зафиксирован в `.python-version`). Если системный Python другой версии,
+окружение можно создать через [uv](https://docs.astral.sh/uv/) — он сам скачает 3.12:
+
+```bash
+uv venv -p 3.12 .venv
+source .venv/bin/activate
+uv pip install -e ".[dev]"
+```
+
+Проверено 2026-10-28 на Linux (CachyOS), Python 3.12.16: `ruff check .` без замечаний, `pytest -q` проходит.
 
 Проверка:
 
@@ -275,4 +292,4 @@ immutable image identity, API version, CI, hashes evidence, approvals и rollbac
 - решения оформляются в `docs/adr/`;
 - каждый участник заполняет собственную evidence card в `docs/evidence/`.
 
-Скопируйте `CODEOWNERS.example` в `CODEOWNERS`, заменив заполнители реальными GitHub-логинами команды.
+`CODEOWNERS` содержит GitHub-логины команды; новые участники добавляются отдельным PR.
