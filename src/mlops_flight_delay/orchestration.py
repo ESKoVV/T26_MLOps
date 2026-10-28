@@ -11,6 +11,7 @@ import pandas as pd
 from prefect import flow, get_run_logger, task
 
 from mlops_flight_delay.evaluate import classification_metrics
+from mlops_flight_delay.split import sort_by_event_time
 from mlops_flight_delay.train import FEATURES, delay_target, train_model
 from mlops_flight_delay.validate_data import validate_dataset
 
@@ -34,8 +35,7 @@ def preprocess_stage(data_path: Path, output_path: Path) -> dict[str, Any]:
     missing = sorted(required - set(data.columns))
     if missing:
         raise ValueError(f"Preprocess input is missing columns: {missing}")
-    data["FlightDate"] = pd.to_datetime(data["FlightDate"], errors="raise")
-    data = data.sort_values("FlightDate").reset_index(drop=True)
+    data = sort_by_event_time(data)
     if data[list(required)].isna().any().any():
         raise ValueError("Preprocess input contains nulls in required columns")
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -115,7 +115,23 @@ def validate_task(data_path: Path, contract_path: Path, report_path: Path) -> di
     return result
 
 
-@task(name="preprocess", retries=2, retry_delay_seconds=1)
+def retry_only_transient(task, task_run, state) -> bool:
+    """Retry an I/O hiccup (OSError); never retry a deterministic error such as ValueError."""
+    try:
+        state.result()
+    except OSError:
+        return True
+    except Exception:  # noqa: BLE001 - any other failure is deterministic here
+        return False
+    return False
+
+
+@task(
+    name="preprocess",
+    retries=2,
+    retry_delay_seconds=1,
+    retry_condition_fn=retry_only_transient,
+)
 def preprocess_task(
     data_path: Path,
     output_path: Path,
