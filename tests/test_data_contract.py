@@ -174,3 +174,22 @@ def test_bts_contract_rejects_bad_carrier_code(tmp_path: Path) -> None:
     assert any(
         item["name"] == "Carrier.pattern" and not item["passed"] for item in result["checks"]
     )
+
+
+def test_dvc_pointer_mismatch_is_detected(tmp_path: Path) -> None:
+    import hashlib
+
+    data = tmp_path / "data.csv"
+    _valid_frame().to_csv(data, index=False)
+    pointer = tmp_path / "data.csv.dvc"
+    md5 = hashlib.md5(data.read_bytes()).hexdigest()
+    pointer.write_text(f"outs:\n- md5: {md5}\n  path: data.csv\n", encoding="utf-8")
+    assert validate_dataset(data, CONTRACT, pointer)["passed"] is True
+
+    with data.open("a", encoding="utf-8") as handle:
+        handle.write("2026-02-01,9,0,30\n")
+    result = validate_dataset(data, CONTRACT, pointer)
+    assert result["passed"] is False
+    assert any(
+        item["name"] == "dvc.md5_matches" and not item["passed"] for item in result["checks"]
+    )
