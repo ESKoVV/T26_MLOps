@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import joblib
+import numpy as np
 import pandas as pd
 
 from mlops_flight_delay.train import FEATURES
@@ -124,9 +125,16 @@ def _smoke_registry_model(model_uri: str, data_path: Path) -> None:
 
     data = pd.read_csv(data_path)
     model = mlflow.pyfunc.load_model(model_uri)
-    predictions = model.predict(data[FEATURES].head(5))
-    if len(predictions) == 0:
-        raise ValueError("Registry model smoke prediction returned no values")
+    probabilities = np.asarray(model.predict(data[FEATURES].head(5)), dtype=float)
+    check_probability_output(probabilities, rows=min(5, len(data)))
+
+
+def check_probability_output(probabilities: np.ndarray, *, rows: int) -> None:
+    """Registry models must return class probabilities: shape (rows, 2), finite, in [0, 1]."""
+    if probabilities.shape != (rows, 2):
+        raise ValueError(f"Expected probabilities of shape ({rows}, 2), got {probabilities.shape}")
+    if not np.isfinite(probabilities).all() or ((probabilities < 0) | (probabilities > 1)).any():
+        raise ValueError("Registry model returned probabilities outside [0, 1]")
 
 
 def register_candidate(args: argparse.Namespace) -> dict[str, Any]:
@@ -147,7 +155,7 @@ def register_candidate(args: argparse.Namespace) -> dict[str, Any]:
     bundle = joblib.load(args.model)
     data = pd.read_csv(args.data)
     input_example = data[bundle["features"]].head(5)
-    output_example = bundle["model"].predict_proba(input_example)[:, 1]
+    output_example = bundle["model"].predict_proba(input_example)
     signature = infer_signature(input_example, output_example)
 
     mlflow.set_tracking_uri(args.tracking_uri)
@@ -167,6 +175,8 @@ def register_candidate(args: argparse.Namespace) -> dict[str, Any]:
             name="model",
             signature=signature,
             input_example=input_example,
+            # pyfunc must serve what the signature declares: probabilities, not class labels.
+            pyfunc_predict_fn="predict_proba",
             # MLflow 3.17 serializes sklearn models with skops and refuses to load tree nodes
             # unless they are trusted explicitly. The model is trained by this pipeline, so the
             # single reviewed type is trusted instead of switching back to pickle.
