@@ -1,0 +1,66 @@
+{
+  "contract_version": "1.0.0",
+  "dataset": "flight-delay-bts-atl",
+  "description": "Вылеты из ATL по данным BTS On-Time Performance; отменённые и перенаправленные рейсы исключены",
+  "owner": "team-3",
+  "source": {
+    "type": "public-government-data",
+    "uri": "https://transtats.bts.gov/PREZIP/On_Time_Reporting_Carrier_On_Time_Performance_1987_present_2026_{1,2}.zip",
+    "license": "Public domain (U.S. Bureau of Transportation Statistics)",
+    "collected_at": "2026-10-28",
+    "build_script": "scripts/build_bts_fragment.py"
+  },
+  "minimum_rows": 20000,
+  "allow_extra_columns": false,
+  "duplicate_rows": "forbid",
+  "columns": {
+    "FlightDate": {
+      "role": "event_time",
+      "type": "date",
+      "format": "%Y-%m-%d",
+      "nullable": false,
+      "description": "Дата рейса для хронологического разбиения"
+    },
+    "Carrier": {
+      "role": "identifier",
+      "type": "string",
+      "nullable": false,
+      "pattern": "^[A-Z0-9]{2}$",
+      "description": "IATA-код перевозчика; только для уникальности строки, в признаки не входит"
+    },
+    "FlightNumber": {
+      "role": "identifier",
+      "type": "integer",
+      "nullable": false,
+      "minimum": 1,
+      "maximum": 9999,
+      "description": "Номер рейса перевозчика; только для уникальности строки"
+    },
+    "DepHour": {
+      "role": "feature",
+      "type": "integer",
+      "nullable": false,
+      "minimum": 0,
+      "maximum": 23,
+      "description": "Час отправления по местному времени"
+    },
+    "IsWeekend": {
+      "role": "feature",
+      "type": "integer",
+      "nullable": false,
+      "allowed_values": [
+        0,
+        1
+      ],
+      "description": "Признак выходного дня"
+    },
+    "ArrDelay": {
+      "role": "target_source",
+      "type": "integer",
+      "nullable": false,
+      "minimum": -180,
+      "maximum": 1440,
+      "description": "Задержка прибытия в минутах; целевой класс строится условием ArrDelay >= 15"
+    }
+  }
+}

@@ -8,6 +8,7 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 
 from mlops_flight_delay.evaluate import classification_metrics
+from mlops_flight_delay.split import chronological_bounds, sort_by_event_time
 
 FEATURES = ["DepHour", "IsWeekend"]
 
@@ -27,15 +28,13 @@ def train_model(
     if data[FEATURES + ["ArrDelay"]].isna().any().any():
         raise ValueError("Обучающие данные содержат пропуски")
 
-    data["FlightDate"] = pd.to_datetime(data["FlightDate"], errors="raise")
-    data = data.sort_values("FlightDate").reset_index(drop=True)
+    data = sort_by_event_time(data)
     x = data[FEATURES]
     y = (data["ArrDelay"] >= 15).astype(int)
     if y.nunique() < 2:
         raise ValueError("Для обучения нужны примеры обоих классов")
 
-    train_end = int(len(data) * 0.6)
-    validation_end = int(len(data) * 0.8)
+    train_end, validation_end = chronological_bounds(data["FlightDate"])
     x_train, y_train = x.iloc[:train_end], y.iloc[:train_end]
     x_validation, y_validation = x.iloc[train_end:validation_end], y.iloc[train_end:validation_end]
     y_test = y.iloc[validation_end:]
