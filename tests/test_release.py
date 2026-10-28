@@ -43,3 +43,28 @@ def test_changed_evidence_breaks_verification() -> None:
     manifest["evidence"][0]["sha256"] = "0" * 64
     with pytest.raises(ValueError, match="SHA256"):
         verify_release_manifest(manifest, POLICY, ROOT)
+
+
+def test_gate_cannot_claim_pass_over_failing_evidence(tmp_path: Path) -> None:
+    root = tmp_path
+    for gate in SPEC["gates"]:
+        target = root / gate["path"]
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((ROOT / gate["path"]).read_bytes())
+    (root / "reports/governance/lr14-example.json").write_text(
+        json.dumps({"status": "review"}), encoding="utf-8"
+    )
+    with pytest.raises(ValueError, match="status=review"):
+        build_release_manifest(SPEC, POLICY, root)
+
+
+@pytest.mark.parametrize("approver", ["Student-Author", " student-author "], ids=["case", "spaces"])
+def test_self_approval_with_different_case_stays_draft(approver: str) -> None:
+    spec = copy.deepcopy(SPEC)
+    spec["ci"] = {"status": "success", "run_url": "https://github.com/acme/repo/actions/runs/1"}
+    spec["approvals"] = {
+        "prepared_by": "student-author",
+        "approved_by": approver,
+        "approved_at": None,
+    }
+    assert build_release_manifest(spec, POLICY, ROOT)["release_status"] == "draft"

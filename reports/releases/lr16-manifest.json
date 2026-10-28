@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.0.0",
+  "release_status": "draft",
+  "release_version": "1.2.0-team-3",
+  "evaluation_date": "2026-10-28",
+  "source_commit": "21e2d28c834ff725353ceaf7ed87da46941854d8",
+  "data": {
+    "contract_version": "1.0.0",
+    "dataset": "flight-delay-bts-atl",
+    "dvc_md5": "bb0fdbb60462dd3c4f22aea8b0aa901f",
+    "sha256": "78721daf85b396674e95464ca6aae151dedc7db86c480d5aef881ab4187fcace",
+    "rows": 45954,
+    "period": [
+      "2026-01-01",
+      "2026-02-28"
+    ]
+  },
+  "model": {
+    "name": "team-3-flight-delay-classifier",
+    "version": "1",
+    "alias": "champion",
+    "resolved_uri": "models:/team-3-flight-delay-classifier/1",
+    "mlflow_run_id": "674de9fa758d460b8df38d066c4ab1b2",
+    "classification_threshold": 0.19
+  },
+  "image": {
+    "ref": "mlops-flight-delay:21e2d28c834ff725353ceaf7ed87da46941854d8",
+    "identity_kind": "immutable_commit_tag",
+    "note": "образ собирается job container в CI по полному SHA; в registry не публикуется"
+  },
+  "api": {
+    "openapi_version": "1.1.0",
+    "compatibility": "backward-compatible",
+    "contract": "reports/openapi/lr7-openapi.json"
+  },
+  "ci": {
+    "status": "success",
+    "run_url": "https://github.com/ESKoVV/T26_MLOps/actions/runs/40727425379",
+    "jobs": [
+      "quality",
+      "container"
+    ]
+  },
+  "evidence": [
+    {
+      "name": "data_contract",
+      "status": "pass",
+      "path": "docs/reproducibility/lr3-v2-validation.json",
+      "sha256": "17fe854c85dc4767ef10e0e7d198d54d82e8aad502b6d3c3af7fafe9fa871a24"
+    },
+    {
+      "name": "point_in_time_features",
+      "status": "pass",
+      "path": "reports/features/lr13-bts/audit.json",
+      "sha256": "64b4edd435292b0fbf12356e528b5db80347f23166266287592ec8cb416aacaf"
+    },
+    {
+      "name": "monitoring_decision",
+      "status": "pass",
+      "path": "reports/monitoring/lr12-bts-baseline.json",
+      "sha256": "adb9ab971156a07769008a80b7d30828344a061f7d642745aa19b3b4b2192a53"
+    },
+    {
+      "name": "responsible_ai",
+      "status": "accepted_with_investigation",
+      "path": "reports/governance/lr14-bts.json",
+      "sha256": "9a6fb0d9771f2dc229f3c8ee11b9a48ead729621a2a5374345b2a7da79309d45",
+      "exception": {
+        "owner": "ESKoVV",
+        "expires_at": "2026-11-25",
+        "reason": "F1 gap IsWeekend 0.256 при лимите 0.25 объясняется разной долей задержек (0.228 и 0.372); ROC AUC групп 0.581 и 0.624. План проверки — docs/governance/lr14.md"
+      }
+    },
+    {
+      "name": "capacity",
+      "status": "pass",
+      "path": "reports/capacity/lr15-eskov-run1.json",
+      "sha256": "35d22982493ba195a224696460f360e11b7a2bf32bac74587f89e041412ff3a4"
+    },
+    {
+      "name": "model_card",
+      "status": "pass",
+      "path": "docs/model-card.md",
+      "sha256": "4d6ee50125ff474e4451035ba8bd48b4d433c7ca0ef5f4f83d410bf1efed1c50"
+    },
+    {
+      "name": "security",
+      "status": "pass",
+      "path": "docs/security/threat-model.md",
+      "sha256": "e5f9804a4ab65a3fb4565cce2b3c02e16a75b691b88e1785d4f4d9824159f981"
+    }
+  ],
+  "approvals": {
+    "prepared_by": "ESKoVV",
+    "approved_by": null,
+    "approved_at": null
+  },
+  "rollback": {
+    "previous_model_version": "2",
+    "previous_image_ref": "mlops-flight-delay:3238c8d154462143d9627a1d351e5c90d075c4b3",
+    "trigger": "burst p95 > 0.45 с или error rate > 2 % в двух профилях подряд; ROC AUC по зрелым меткам < 0.58; критическая уязвимость; неверная identity релиза",
+    "procedure": "python -m mlops_flight_delay.registry rollback --target-version <prev> ... и redeploy предыдущего образа по SHA; отработано в ЛР10 (reports/releases/lr10-rollback.json)"
+  },
+  "limitations": [
+    "Один аэропорт (ATL) и два зимних месяца 2026",
+    "Два слабых признака, test ROC AUC 0.631",
+    "Нагрузочные замеры ЛР15 на uvicorn без контейнера",
+    "Promotion в ЛР10 выполнено в режиме drill (одобрение автором)",
+    "Kubernetes и LLMOps проверены на уровне review манифестов"
+  ]
+}

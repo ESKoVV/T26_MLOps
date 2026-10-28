@@ -8,6 +8,29 @@
 - Правила веток, PR и review: [CONTRIBUTING.md](CONTRIBUTING.md).
 - Ветка команды у преподавателя: `Irina-64/T26_MLOps:team-3`.
 
+## Лабораторные работы team-3
+
+| ЛР | Тема | PR | Главное |
+|---|---|---|---|
+| 1 | Репозиторий и среда | #2 | 5 дефектов CI стартового проекта, `requirements.lock`, ADR 0001 |
+| 2 | Контракт данных | #4 | разбиение по календарным дням, контракт BTS |
+| 3 | DVC | #6 | фрагмент BTS ATL v1/v2, протокол восстановления |
+| 4 | MLflow Tracking | #8 | 2 run, исправлен `data.dvc_hash` |
+| 5 | Тесты | #10 | defect injection, повреждённая модель |
+| 6 | Контейнер | — | ждёт Docker на машине тимлида; образ собирает CI |
+| 7 | Контракт API | #12 | строгий request ID, 500 `ErrorResponse` |
+| 8 | CI | #14 | controlled failure, actions по SHA, защита веток |
+| 9 | Prefect | #16 | retry только для `OSError` |
+| 10 | Registry | #18 | pyfunc `predict_proba`, запрет самоодобрения, rollback |
+| 11 | Наблюдаемость | — | ждёт Docker (Prometheus/Grafana) |
+| 12 | Drift | #20 | окна BTS, coverage, решения |
+| 13 | Point-in-time | #22 | утечка same-day завышает AUC 0.58 → 0.68 |
+| 14 | Governance | #24 | model card 2.0.0, порог по validation, F1 gap |
+| 15 | Capacity | #26 | bottleneck — CPU одного процесса |
+| 16 | Release | #28 | manifest, проверка claims; draft до независимого approval |
+
+Отчёты по каждой ЛР — в `docs/` (ссылки в PR), evidence cards — `docs/evidence/lrN-evidence-card-<login>.md`.
+
 ## Быстрый старт
 
 ```bash
