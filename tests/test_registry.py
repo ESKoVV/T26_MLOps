@@ -5,6 +5,7 @@ import pytest
 
 from mlops_flight_delay.registry import (
     build_release_manifest,
+    check_independent_approval,
     sha256_file,
     validate_candidate_inputs,
     validate_commit_sha,
@@ -74,5 +75,28 @@ def test_release_manifest_uses_exact_version_and_previous_champion() -> None:
     )
     assert manifest["resolved_model_uri"].endswith("/2")
     assert manifest["previous_champion_version"] == "1"
-    assert manifest["decision"] == {"status": "approved", "approved_by": "reviewer"}
+    assert manifest["decision"] == {
+        "status": "approved",
+        "approved_by": "reviewer",
+        "review": "independent",
+    }
     json.dumps(manifest)
+
+
+@pytest.mark.parametrize(
+    ("registered_by", "approved_by", "drill", "expected"),
+    [
+        ("ESKoVV", "Babidjon1337", False, "independent"),
+        ("ESKoVV", "eskovv", True, "self-drill"),
+        ("unknown", "ci", False, "independent"),
+    ],
+    ids=["other-member", "self-drill", "ci-smoke"],
+)
+def test_approval_kind(registered_by, approved_by, drill, expected) -> None:
+    assert check_independent_approval(registered_by, approved_by, drill=drill) == expected
+
+
+@pytest.mark.parametrize("approved_by", ["ESKoVV", "eskovv", "  "], ids=["same", "case", "blank"])
+def test_self_or_blank_approval_is_rejected(approved_by: str) -> None:
+    with pytest.raises(ValueError):
+        check_independent_approval("ESKoVV", approved_by, drill=False)

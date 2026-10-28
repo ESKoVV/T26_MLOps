@@ -63,6 +63,19 @@ def validate_candidate_inputs(
     }
 
 
+def check_independent_approval(registered_by: str, approved_by: str, *, drill: bool) -> str:
+    """Return the review kind; refuse self-approval unless it is an explicit training drill."""
+    if not approved_by.strip():
+        raise ValueError("approved_by must name the reviewer")
+    if approved_by.strip().lower() != registered_by.strip().lower():
+        return "independent"
+    if drill:
+        return "self-drill"
+    raise ValueError(
+        f"approver {approved_by!r} registered this candidate; an independent reviewer is required"
+    )
+
+
 def build_release_manifest(
     *,
     model_name: str,
@@ -75,6 +88,7 @@ def build_release_manifest(
     roc_auc: float,
     status: str,
     approved_by: str,
+    review: str = "independent",
 ) -> dict[str, Any]:
     return {
         "schema_version": "1.0.0",
@@ -93,7 +107,7 @@ def build_release_manifest(
             "minimum_roc_auc": minimum_roc_auc,
             "roc_auc": roc_auc,
         },
-        "decision": {"status": status, "approved_by": approved_by},
+        "decision": {"status": status, "approved_by": approved_by, "review": review},
     }
 
 
@@ -169,6 +183,7 @@ def register_candidate(args: argparse.Namespace) -> dict[str, Any]:
         "data_sha256": gate["data_sha256"],
         "quality_report": args.output.as_posix(),
         "owner_team": args.owner_team,
+        "registered_by": args.registered_by,
         "release_status": "candidate",
         "test_roc_auc": str(gate["roc_auc"]),
         "minimum_roc_auc": str(gate["minimum_roc_auc"]),
@@ -215,6 +230,9 @@ def promote_candidate(args: argparse.Namespace) -> dict[str, Any]:
     if candidate.tags.get("validation_status") != "passed":
         raise ValueError("candidate does not have validation_status=passed")
     reviewed_version = str(candidate.version)
+    review = check_independent_approval(
+        candidate.tags.get("registered_by", "unknown"), args.approved_by, drill=args.drill
+    )
     champion = _alias_or_none(client, args.model_name, "champion")
     previous = str(champion.version) if champion is not None else None
 
@@ -228,6 +246,7 @@ def promote_candidate(args: argparse.Namespace) -> dict[str, Any]:
         raise RuntimeError("champion alias verification failed")
     client.set_model_version_tag(args.model_name, reviewed_version, "release_status", "approved")
     client.set_model_version_tag(args.model_name, reviewed_version, "approved_by", args.approved_by)
+    client.set_model_version_tag(args.model_name, reviewed_version, "review", review)
 
     manifest = build_release_manifest(
         model_name=args.model_name,
@@ -240,6 +259,7 @@ def promote_candidate(args: argparse.Namespace) -> dict[str, Any]:
         roc_auc=float(resolved.tags["test_roc_auc"]),
         status="approved",
         approved_by=args.approved_by,
+        review=review,
     )
     _write_json(args.output, manifest)
     return manifest
@@ -293,6 +313,7 @@ def _parser() -> argparse.ArgumentParser:
     register.add_argument("--summary", type=Path, required=True)
     register.add_argument("--source-commit", required=True)
     register.add_argument("--minimum-roc-auc", type=float, default=0.5)
+    register.add_argument("--registered-by", default="unknown", help="GitHub login автора")
     register.add_argument("--output", type=Path, required=True)
     register.set_defaults(handler=register_candidate)
 
@@ -301,6 +322,11 @@ def _parser() -> argparse.ArgumentParser:
     promote.add_argument("--model-name", required=True)
     promote.add_argument("--data", type=Path, required=True)
     promote.add_argument("--approved-by", required=True)
+    promote.add_argument(
+        "--drill",
+        action="store_true",
+        help="учебная отработка: разрешить одобрение автором, отметить review=self-drill",
+    )
     promote.add_argument("--output", type=Path, required=True)
     promote.set_defaults(handler=promote_candidate)
 
