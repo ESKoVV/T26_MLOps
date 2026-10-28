@@ -1,0 +1,65 @@
+{
+  "policy_version": "1.0.0-team-3-bts",
+  "status": "review",
+  "scope": {
+    "group_column": "IsWeekend",
+    "statement": "IsWeekend — учебный операционный сегмент; результат не является доказательством справедливости для защищённых или уязвимых групп."
+  },
+  "threshold": 0.19,
+  "overall": {
+    "rows": 9651,
+    "positive_rate": 0.26100922184229614,
+    "predicted_positive_rate": 0.4152937519428039,
+    "precision": 0.34830339321357284,
+    "recall": 0.5541881699086939,
+    "f1": 0.4277616056381186,
+    "roc_auc": 0.6312842364379566
+  },
+  "groups": {
+    "0": {
+      "rows": 7427,
+      "positive_rate": 0.2276827790494143,
+      "predicted_positive_rate": 0.3056415780261209,
+      "precision": 0.2854625550660793,
+      "recall": 0.38320520402128916,
+      "f1": 0.32719010350921485,
+      "roc_auc": 0.5806187816869521,
+      "status": "reported"
+    },
+    "1": {
+      "rows": 2224,
+      "positive_rate": 0.3723021582733813,
+      "predicted_positive_rate": 0.7814748201438849,
+      "precision": 0.43037974683544306,
+      "recall": 0.9033816425120773,
+      "f1": 0.583008573655495,
+      "roc_auc": 0.623460058413964,
+      "status": "reported"
+    }
+  },
+  "f1_gap": 0.2558184701462801,
+  "checks": {
+    "minimum_overall_f1": true,
+    "maximum_f1_gap": false,
+    "enough_groups": true,
+    "model_card_complete": true
+  },
+  "model_card": {
+    "path": "docs/model-card.md",
+    "required_sections": [
+      "Краткое описание",
+      "Назначение",
+      "Недопустимое использование",
+      "Модель и данные",
+      "Оценка качества",
+      "Групповые метрики",
+      "Ограничения и риски",
+      "Мониторинг и реакция",
+      "Безопасность и конфиденциальность",
+      "Надзор человека",
+      "Владелец и журнал изменений"
+    ],
+    "missing_sections": [],
+    "status": "pass"
+  }
+}
