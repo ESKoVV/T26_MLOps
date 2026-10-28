@@ -1,0 +1,24 @@
+{
+  "flow": "flight-delay-training",
+  "stages": [
+    "validate",
+    "preprocess",
+    "train",
+    "evaluate"
+  ],
+  "data_sha256": "78721daf85b396674e95464ca6aae151dedc7db86c480d5aef881ab4187fcace",
+  "prepared_sha256": "78721daf85b396674e95464ca6aae151dedc7db86c480d5aef881ab4187fcace",
+  "model_path": "models/lr9-retry.joblib",
+  "parameters": {
+    "n_estimators": 120,
+    "max_depth": 8,
+    "random_state": 42
+  },
+  "metrics": {
+    "roc_auc": 0.6312842364379566,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+  },
+  "passed": true
+}

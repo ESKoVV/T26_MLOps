@@ -1,0 +1,38 @@
+15:51:31.603 | INFO    | prefect - Starting temporary server on http://127.0.0.1:8669
+See https://docs.prefect.io/v3/concepts/server#how-to-guides for more information on running a dedicated Prefect server.
+15:51:33.988 | INFO    | Flow run 'flight-delay-rs-42' - Beginning flow run 'flight-delay-rs-42' for flow 'flight-delay-training'
+15:51:34.074 | INFO    | Task run 'validate-aed' - Data contract passed for 45954 rows
+15:51:34.076 | INFO    | Task run 'validate-aed' - Finished in state Completed()
+15:51:34.080 | INFO    | Task run 'preprocess-916' - Task run failed with exception: OSError('Controlled transient input failure for retry demonstration') - Retry 1/2 will start 1 second(s) from now
+15:51:35.170 | INFO    | Task run 'preprocess-916' - Prepared 45954 rows; sha256=78721daf85b396674e95464ca6aae151dedc7db86c480d5aef881ab4187fcace
+15:51:35.171 | INFO    | Task run 'preprocess-916' - Finished in state Completed()
+15:51:35.532 | INFO    | Task run 'train-68d' - Model trained; validation ROC AUC=0.576
+15:51:35.533 | INFO    | Task run 'train-68d' - Finished in state Completed()
+15:51:35.586 | INFO    | Task run 'evaluate-0ed' - Test ROC AUC=0.631
+15:51:35.587 | INFO    | Task run 'evaluate-0ed' - Finished in state Completed()
+15:51:36.002 | INFO    | Flow run 'flight-delay-rs-42' - Finished in state Completed()
+{
+  "flow": "flight-delay-training",
+  "stages": [
+    "validate",
+    "preprocess",
+    "train",
+    "evaluate"
+  ],
+  "data_sha256": "78721daf85b396674e95464ca6aae151dedc7db86c480d5aef881ab4187fcace",
+  "prepared_sha256": "78721daf85b396674e95464ca6aae151dedc7db86c480d5aef881ab4187fcace",
+  "model_path": "models/lr9-retry.joblib",
+  "parameters": {
+    "n_estimators": 120,
+    "max_depth": 8,
+    "random_state": 42
+  },
+  "metrics": {
+    "roc_auc": 0.6312842364379566,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+  },
+  "passed": true
+}
+15:51:36.038 | INFO    | prefect - Stopping temporary server on http://127.0.0.1:8669
