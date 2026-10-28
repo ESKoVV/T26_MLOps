@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import pickle
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -80,6 +81,20 @@ class ErrorResponse(BaseModel):
     details: list[ErrorItem] = Field(default_factory=list)
 
 
+REQUIRED_BUNDLE_KEYS = {"model", "features", "version"}
+# What joblib/pickle raise on truncated, foreign or incompatible files.
+MODEL_LOAD_ERRORS = (
+    EOFError,
+    OSError,
+    pickle.UnpicklingError,
+    ValueError,
+    TypeError,
+    KeyError,
+    AttributeError,
+    ImportError,
+)
+
+
 def error_payload(
     request: Request,
     *,
@@ -109,7 +124,24 @@ def create_app(model_path: Path | None = None) -> FastAPI:
     async def lifespan(app: FastAPI):
         app.state.model_bundle = None
         if resolved_path.exists():
-            app.state.model_bundle = joblib.load(resolved_path)
+            try:
+                bundle = joblib.load(resolved_path)
+                missing = REQUIRED_BUNDLE_KEYS - set(bundle)
+                if missing:
+                    raise ValueError(f"model bundle is missing keys: {sorted(missing)}")
+                app.state.model_bundle = bundle
+            except MODEL_LOAD_ERRORS as exception:
+                # A damaged file is a deployment error: log it and stop startup instead of
+                # serving with a half-initialized state. A missing file stays "not ready" (503).
+                LOGGER.error(
+                    json.dumps(
+                        {"event": "model_load_failed", "error": type(exception).__name__},
+                        ensure_ascii=False,
+                    )
+                )
+                raise RuntimeError(
+                    f"Model file {resolved_path.name} cannot be loaded"
+                ) from exception
         bundle = app.state.model_bundle or {}
         app.state.model_metadata = {
             "model_name": os.getenv("MODEL_NAME", "flight-delay-classifier"),
