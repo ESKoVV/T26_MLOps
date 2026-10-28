@@ -1,0 +1,99 @@
+{
+  "base_url": "http://127.0.0.1:8080",
+  "passed": 4,
+  "cases": [
+    {
+      "case": "valid",
+      "request": {
+        "dep_hour": 9,
+        "is_weekend": 0
+      },
+      "expected_status": 200,
+      "actual_status": 200,
+      "response": {
+        "delay_probability": 0.18326077372747102,
+        "delayed": false,
+        "threshold": 0.5,
+        "model_version": "0.2.0",
+        "request_id": "lr7-smoke"
+      },
+      "x_request_id": "lr7-smoke"
+    },
+    {
+      "case": "hour_out_of_range",
+      "request": {
+        "dep_hour": 24,
+        "is_weekend": 0
+      },
+      "expected_status": 422,
+      "actual_status": 422,
+      "response": {
+        "error_code": "validation_error",
+        "message": "Запрос не соответствует контракту",
+        "request_id": "lr7-smoke",
+        "details": [
+          {
+            "location": [
+              "body",
+              "dep_hour"
+            ],
+            "message": "Input should be less than or equal to 23",
+            "error_type": "less_than_equal"
+          }
+        ]
+      },
+      "x_request_id": "lr7-smoke"
+    },
+    {
+      "case": "unknown_field",
+      "request": {
+        "dep_hour": 9,
+        "is_weekend": 0,
+        "actual_delay": 42
+      },
+      "expected_status": 422,
+      "actual_status": 422,
+      "response": {
+        "error_code": "validation_error",
+        "message": "Запрос не соответствует контракту",
+        "request_id": "lr7-smoke",
+        "details": [
+          {
+            "location": [
+              "body",
+              "actual_delay"
+            ],
+            "message": "Extra inputs are not permitted",
+            "error_type": "extra_forbidden"
+          }
+        ]
+      },
+      "x_request_id": "lr7-smoke"
+    },
+    {
+      "case": "wrong_type",
+      "request": {
+        "dep_hour": "9",
+        "is_weekend": 0
+      },
+      "expected_status": 422,
+      "actual_status": 422,
+      "response": {
+        "error_code": "validation_error",
+        "message": "Запрос не соответствует контракту",
+        "request_id": "lr7-smoke",
+        "details": [
+          {
+            "location": [
+              "body",
+              "dep_hour"
+            ],
+            "message": "Input should be a valid integer",
+            "error_type": "int_type"
+          }
+        ]
+      },
+      "x_request_id": "lr7-smoke"
+    }
+  ]
+}
