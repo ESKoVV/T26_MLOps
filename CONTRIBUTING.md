@@ -3,7 +3,7 @@
 ## Схема веток team-3
 
 1. `ESKoVV/T26_MLOps:main` — интеграционная ветка команды. Прямой push запрещён.
-2. На каждого участника есть ветка `student-01` … `student-05` (см. `docs/team-roles.md`).
+2. На каждого участника есть ветка `student-02` … `student-05` (см. `docs/team-roles.md`).
 3. Участник делает fork своей ветки, работает в `main` своего fork-а и открывает PR
    `STUDENT_LOGIN:main` → `ESKoVV:student-XX`. Тимлид работает в ветке задачи и открывает PR в `student-02`.
 4. После review тимлид открывает PR `student-XX` → `main`.
