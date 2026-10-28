@@ -1,0 +1,9 @@
+{
+  "model_path": "models/lr10-b.joblib",
+  "validation_roc_auc": 0.576888958752237,
+  "parameters": {
+    "n_estimators": 60,
+    "max_depth": 5,
+    "random_state": 42
+  }
+}
