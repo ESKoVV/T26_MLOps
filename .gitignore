@@ -17,3 +17,5 @@ reports/openapi/ci-openapi.json
 data/raw/
 data/processed/
 !reports/tests/lr5-pass.xml
+reports/prefect/**/prepared.csv
+reports/prefect/ci/
