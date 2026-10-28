@@ -1,0 +1,14 @@
+{
+  "policy_version": "1.0.0-team-3-bts",
+  "minimum_window_rows": 500,
+  "psi_warning": 0.1,
+  "psi_alert": 0.25,
+  "expected_label_delay_hours": 24,
+  "minimum_labeled_rows": 500,
+  "minimum_label_coverage": 0.9,
+  "minimum_roc_auc": 0.58,
+  "minimum_f1": 0.0,
+  "owner": "team-3",
+  "review_required": true,
+  "automatic_retraining": false
+}
