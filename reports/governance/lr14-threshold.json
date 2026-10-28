@@ -1,0 +1,12 @@
+{
+  "selected_on": "validation",
+  "validation_period": [
+    "2026-02-06",
+    "2026-02-16"
+  ],
+  "criterion": "max F1",
+  "threshold": 0.19,
+  "validation_f1": 0.273719,
+  "validation_f1_at_0_5": 0.0,
+  "test_rows": 9651
+}
