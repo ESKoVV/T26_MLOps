@@ -11,7 +11,7 @@ import pandas as pd
 from prefect import flow, get_run_logger, task
 
 from mlops_flight_delay.evaluate import classification_metrics
-from mlops_flight_delay.train import FEATURES, train_model
+from mlops_flight_delay.train import FEATURES, delay_target, train_model
 from mlops_flight_delay.validate_data import validate_dataset
 
 
@@ -88,7 +88,7 @@ def evaluate_stage(
     data = pd.read_csv(data_path)
     split = bundle["split"]
     test = data.iloc[int(split["validation_end"]) :]
-    y_test = (test["ArrDelay"] >= 15).astype(int).to_numpy()
+    y_test = delay_target(test["ArrDelay"]).to_numpy()
     probabilities = bundle["model"].predict_proba(test[bundle["features"]])[:, 1]
     metrics = classification_metrics(y_test, probabilities, threshold=threshold)
     result = {

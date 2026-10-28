@@ -11,6 +11,12 @@ from mlops_flight_delay.evaluate import classification_metrics
 from mlops_flight_delay.split import chronological_bounds, sort_by_event_time
 
 FEATURES = ["DepHour", "IsWeekend"]
+TARGET_THRESHOLD_MINUTES = 15
+
+
+def delay_target(arr_delay: pd.Series) -> pd.Series:
+    """Delayed flight = arrival delay of at least 15 minutes (the course target)."""
+    return (arr_delay >= TARGET_THRESHOLD_MINUTES).astype(int)
 
 
 def train_model(
@@ -30,7 +36,7 @@ def train_model(
 
     data = sort_by_event_time(data)
     x = data[FEATURES]
-    y = (data["ArrDelay"] >= 15).astype(int)
+    y = delay_target(data["ArrDelay"])
     if y.nunique() < 2:
         raise ValueError("Для обучения нужны примеры обоих классов")
 

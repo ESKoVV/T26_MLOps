@@ -14,7 +14,7 @@ import pandas as pd
 from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
 
 from mlops_flight_delay.split import SPLIT_POLICY, chronological_bounds, sort_by_event_time
-from mlops_flight_delay.train import FEATURES, train_model
+from mlops_flight_delay.train import FEATURES, delay_target, train_model
 from mlops_flight_delay.validate_data import read_dvc_md5, validate_dataset
 
 
@@ -53,7 +53,7 @@ def run_experiment(
     train_end, validation_end = chronological_bounds(frame["FlightDate"])
     train_frame = frame.iloc[:train_end].copy()
     validation_frame = frame.iloc[train_end:validation_end].copy()
-    validation_target = (validation_frame["ArrDelay"] >= 15).astype(int)
+    validation_target = delay_target(validation_frame["ArrDelay"])
     if validation_target.nunique() < 2:
         raise ValueError("Validation-период должен содержать оба класса")
 
@@ -129,7 +129,7 @@ def run_experiment(
         )
 
         training_input = mlflow.data.from_pandas(
-            train_frame.assign(target=(train_frame["ArrDelay"] >= 15).astype(int)),
+            train_frame.assign(target=delay_target(train_frame["ArrDelay"])),
             source=data_path.as_posix(),
             name="flight-delay-train",
             targets="target",
