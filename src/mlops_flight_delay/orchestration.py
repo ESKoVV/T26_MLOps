@@ -218,6 +218,7 @@ def training_flow(
         simulate_transient_failure=simulate_transient_failure,
         retry_marker=run_dir / ".retry-once",
     )
+    _write_json(run_dir / "02-preprocess.json", prepared)
     training = train_task(
         prepared_path,
         model_path,

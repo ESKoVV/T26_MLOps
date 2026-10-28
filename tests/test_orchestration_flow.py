@@ -92,3 +92,10 @@ def test_summary_links_inputs_and_metrics(
     )
     summary = json.loads((run_dir / "run-summary.json").read_text(encoding="utf-8"))
     assert summary["stages"] == ["validate", "preprocess", "train", "evaluate"]
+    reports = sorted(path.name for path in run_dir.glob("0*.json"))
+    assert reports == [
+        "01-validation.json",
+        "02-preprocess.json",
+        "03-training.json",
+        "04-evaluation.json",
+    ]
