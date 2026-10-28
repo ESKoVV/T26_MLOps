@@ -15,6 +15,8 @@ from mlops_flight_delay.train import FEATURES
 
 FULL_SHA = re.compile(r"^[0-9a-fA-F]{40}$")
 
+SKOPS_TRUSTED_TYPES = ["sklearn.tree._tree.Tree"]
+
 
 def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
@@ -151,6 +153,10 @@ def register_candidate(args: argparse.Namespace) -> dict[str, Any]:
             name="model",
             signature=signature,
             input_example=input_example,
+            # MLflow 3.17 serializes sklearn models with skops and refuses to load tree nodes
+            # unless they are trusted explicitly. The model is trained by this pipeline, so the
+            # single reviewed type is trusted instead of switching back to pickle.
+            skops_trusted_types=SKOPS_TRUSTED_TYPES,
         )
         run_id = run.info.run_id
 
