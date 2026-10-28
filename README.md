@@ -30,6 +30,13 @@ source .venv/bin/activate
 uv pip install -e ".[dev]"
 ```
 
+Точные проверенные версии лежат в `requirements.lock`. Без него резолвер может выбрать
+несовместимую пару (например, prefect 3.8.8 с fastapi 0.162 падает на старте flow):
+
+```bash
+python -m pip install -c requirements.lock -e ".[dev,data,tracking,orchestration]"
+```
+
 Проверено 2026-10-28 на Linux (CachyOS), Python 3.12.16: `ruff check .` без замечаний, `pytest -q` проходит.
 
 Проверка:
