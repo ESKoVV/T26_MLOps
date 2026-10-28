@@ -13,6 +13,48 @@ def _check(name: str, passed: bool, details: str) -> dict[str, Any]:
     return {"name": name, "passed": bool(passed), "details": details}
 
 
+SPLIT_FRACTIONS = (0.6, 0.8)
+SPLIT_POLICY = "chronological-60-20-20"
+
+
+def chronological_split_summary(
+    data: pd.DataFrame, *, target_threshold: int = 15
+) -> dict[str, Any]:
+    """Describe the train/validation/test periods used by training.
+
+    Boundaries follow train.py: rows are sorted by FlightDate and cut at 60 % and 80 %.
+    Positive class is ArrDelay >= target_threshold.
+    """
+    frame = data.copy()
+    frame["FlightDate"] = pd.to_datetime(frame["FlightDate"], errors="raise")
+    frame = frame.sort_values("FlightDate", kind="stable").reset_index(drop=True)
+    train_end = int(len(frame) * SPLIT_FRACTIONS[0])
+    validation_end = int(len(frame) * SPLIT_FRACTIONS[1])
+    parts = {
+        "train": frame.iloc[:train_end],
+        "validation": frame.iloc[train_end:validation_end],
+        "test": frame.iloc[validation_end:],
+    }
+    summary: dict[str, Any] = {"policy": SPLIT_POLICY, "target": f"ArrDelay >= {target_threshold}"}
+    for name, part in parts.items():
+        if part.empty:
+            summary[name] = {"rows": 0}
+            continue
+        summary[name] = {
+            "rows": len(part),
+            "start": part["FlightDate"].min().strftime("%Y-%m-%d"),
+            "end": part["FlightDate"].max().strftime("%Y-%m-%d"),
+            "positive_rate": round(float((part["ArrDelay"] >= target_threshold).mean()), 4),
+        }
+    non_empty = all(len(part) for part in parts.values())
+    summary["ordered"] = bool(
+        non_empty
+        and parts["train"]["FlightDate"].max() < parts["validation"]["FlightDate"].min()
+        and parts["validation"]["FlightDate"].max() < parts["test"]["FlightDate"].min()
+    )
+    return summary
+
+
 def validate_dataset(data_path: Path, contract_path: Path) -> dict[str, Any]:
     contract = json.loads(contract_path.read_text(encoding="utf-8"))
     data = pd.read_csv(data_path)
@@ -99,6 +141,17 @@ def validate_dataset(data_path: Path, contract_path: Path) -> dict[str, Any]:
             )
         )
 
+    split = None
+    if all(item["passed"] for item in checks):
+        split = chronological_split_summary(data)
+        checks.append(
+            _check(
+                "split.chronological_boundaries",
+                split["ordered"],
+                "max(train) < min(validation) <= max(validation) < min(test)",
+            )
+        )
+
     return {
         "contract_version": contract["contract_version"],
         "dataset": contract["dataset"],
@@ -108,6 +161,7 @@ def validate_dataset(data_path: Path, contract_path: Path) -> dict[str, Any]:
         "columns": list(data.columns),
         "passed": all(item["passed"] for item in checks),
         "checks": checks,
+        "split": split,
     }
 
 
