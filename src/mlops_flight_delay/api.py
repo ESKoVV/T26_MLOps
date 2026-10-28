@@ -123,7 +123,6 @@ def create_app(model_path: Path | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         app.state.model_bundle = None
-        app.state.model_load_error = None
         if resolved_path.exists():
             try:
                 bundle = joblib.load(resolved_path)
@@ -131,14 +130,18 @@ def create_app(model_path: Path | None = None) -> FastAPI:
                 if missing:
                     raise ValueError(f"model bundle is missing keys: {sorted(missing)}")
                 app.state.model_bundle = bundle
-            except MODEL_LOAD_ERRORS as exception:  # damaged file must not crash the process
-                app.state.model_load_error = type(exception).__name__
+            except MODEL_LOAD_ERRORS as exception:
+                # A damaged file is a deployment error: log it and stop startup instead of
+                # serving with a half-initialized state. A missing file stays "not ready" (503).
                 LOGGER.error(
                     json.dumps(
                         {"event": "model_load_failed", "error": type(exception).__name__},
                         ensure_ascii=False,
                     )
                 )
+                raise RuntimeError(
+                    f"Model file {resolved_path.name} cannot be loaded"
+                ) from exception
         bundle = app.state.model_bundle or {}
         app.state.model_metadata = {
             "model_name": os.getenv("MODEL_NAME", "flight-delay-classifier"),

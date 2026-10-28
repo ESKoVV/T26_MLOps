@@ -63,19 +63,16 @@ def test_validate_train_load_predict(
     [b"not a joblib file", b""],
     ids=["garbage-bytes", "empty-file"],
 )
-def test_damaged_model_file_keeps_service_not_ready(tmp_path: Path, content: bytes) -> None:
+def test_damaged_model_file_stops_startup(tmp_path: Path, content: bytes, caplog) -> None:
     damaged = tmp_path / "model.joblib"
     damaged.write_bytes(content)
-    with TestClient(create_app(damaged)) as client:
-        assert client.get("/healthz").status_code == 200
-        assert client.get("/readyz").status_code == 503
-        response = client.post("/predict", json={"dep_hour": 9, "is_weekend": 0})
-    assert response.status_code == 503
-    assert response.json()["error_code"] == "not_ready"
+    with pytest.raises(RuntimeError, match="cannot be loaded"), TestClient(create_app(damaged)):
+        pass
+    assert "model_load_failed" in caplog.text
 
 
-def test_bundle_without_version_is_rejected(tmp_path: Path) -> None:
+def test_bundle_without_version_stops_startup(tmp_path: Path) -> None:
     incomplete = tmp_path / "model.joblib"
     joblib.dump({"model": object(), "features": FEATURES}, incomplete)
-    with TestClient(create_app(incomplete)) as client:
-        assert client.get("/readyz").status_code == 503
+    with pytest.raises(RuntimeError, match="cannot be loaded"), TestClient(create_app(incomplete)):
+        pass

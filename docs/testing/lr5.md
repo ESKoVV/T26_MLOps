@@ -30,7 +30,7 @@ python -m pytest -q tests/test_model_bundle.py::test_delay_of_exactly_15_minutes
 | перепутан порядок признаков | `test_bundle_predicts_one_row_with_two_class_probabilities` | assertion на `features` |
 | контракт пропускает `DepHour=24` | `test_invalid_sample_values_are_rejected[hour-24-boundary]` | `passed` = true вместо false |
 | схема API и bundle расходятся | `test_api_reports_the_bundle_version` | неверная версия или 503 |
-| модельный файл повреждён | `test_damaged_model_file_keeps_service_not_ready[garbage-bytes,empty-file]` | `/readyz` 503, процесс жив |
+| модельный файл повреждён | `test_damaged_model_file_stops_startup[garbage-bytes,empty-file]` | `RuntimeError` на старте и событие `model_load_failed` |
 | CSV разошёлся с DVC-версией | `test_dvc_pointer_mismatch_is_detected` | `dvc.md5_matches` = false |
 | run без обязательных tags | `test_train_mlflow.py::test_run_has_course_tags_and_artifacts` | assertion на набор tags |
 
@@ -71,5 +71,7 @@ E       assert True is False
 Находка: дефект «контракт допускает `DepHour=24`» исходно не ловился — проверялось только 25.
 Добавлен граничный case `hour-24-boundary` (отдельный commit).
 
-До ЛР5 повреждённый `model.joblib` ронял сервис при старте (исключение в lifespan). Теперь ошибка
-загрузки пишется в лог событием `model_load_failed`, а сервис остаётся живым и не готовым (503).
+До ЛР5 повреждённый `model.joblib` ронял старт сырым исключением joblib/pickle. Теперь старт
+останавливается контролируемым `RuntimeError` с именем файла, а в лог пишется событие `model_load_failed`
+(контракт ЛР7: сервис не принимает запросы с частично инициализированным состоянием). Отсутствующий
+файл — другой случай: процесс жив, `/readyz` и `/predict` отвечают 503.
