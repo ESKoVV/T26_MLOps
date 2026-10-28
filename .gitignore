@@ -20,3 +20,6 @@ data/processed/
 reports/prefect/**/prepared.csv
 reports/prefect/ci/
 data/monitoring/bts/
+data/features/bts/
+reports/features/lr13-bts/*.csv
+reports/features/lr13-ci/
