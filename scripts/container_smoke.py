@@ -40,9 +40,7 @@ def wait_until_ready(base_url: str, timeout: float) -> None:
 def run_smoke(base_url: str, timeout: float) -> dict[str, Any]:
     base_url = base_url.rstrip("/")
     wait_until_ready(base_url, timeout)
-    prediction = request_json(
-        f"{base_url}/predict", {"dep_hour": 9, "is_weekend": 0}
-    )
+    prediction = request_json(f"{base_url}/predict", {"dep_hour": 9, "is_weekend": 0})
     probability = prediction.get("delay_probability")
     if not isinstance(probability, (int, float)) or not 0.0 <= probability <= 1.0:
         raise RuntimeError("delay_probability отсутствует или находится вне [0, 1]")

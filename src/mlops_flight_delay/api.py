@@ -113,9 +113,7 @@ def create_app(model_path: Path | None = None) -> FastAPI:
         bundle = app.state.model_bundle or {}
         app.state.model_metadata = {
             "model_name": os.getenv("MODEL_NAME", "flight-delay-classifier"),
-            "model_version": os.getenv(
-                "MODEL_VERSION", str(bundle.get("version", "unavailable"))
-            ),
+            "model_version": os.getenv("MODEL_VERSION", str(bundle.get("version", "unavailable"))),
             "source_commit": os.getenv("SOURCE_COMMIT", "unknown"),
         }
         MODEL_INFO.labels(**app.state.model_metadata).set(1)
@@ -229,9 +227,7 @@ def create_app(model_path: Path | None = None) -> FastAPI:
             PREDICTIONS.labels(outcome="not_ready", model_version="unavailable").inc()
             raise HTTPException(status_code=503, detail="Модель не загружена")
         try:
-            frame = pd.DataFrame(
-                [{"DepHour": payload.dep_hour, "IsWeekend": payload.is_weekend}]
-            )
+            frame = pd.DataFrame([{"DepHour": payload.dep_hour, "IsWeekend": payload.is_weekend}])
             probability = float(bundle["model"].predict_proba(frame[bundle["features"]])[:, 1][0])
             threshold = 0.5
             model_version = api.state.model_metadata["model_version"]

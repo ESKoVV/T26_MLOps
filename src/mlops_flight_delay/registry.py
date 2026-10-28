@@ -48,9 +48,7 @@ def validate_candidate_inputs(
         raise ValueError("Upstream summary has no metrics.roc_auc")
     roc_auc = float(metrics["roc_auc"])
     if roc_auc < minimum_roc_auc:
-        raise ValueError(
-            f"Quality gate failed: ROC AUC {roc_auc:.3f} < {minimum_roc_auc:.3f}"
-        )
+        raise ValueError(f"Quality gate failed: ROC AUC {roc_auc:.3f} < {minimum_roc_auc:.3f}")
     actual_hash = sha256_file(data_path)
     expected_hash = summary.get("prepared_sha256")
     if actual_hash != expected_hash:
@@ -334,4 +332,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

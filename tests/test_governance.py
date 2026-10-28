@@ -6,9 +6,7 @@ import pandas as pd
 from mlops_flight_delay.governance import audit_model_card, build_governance_report
 
 ROOT = Path(__file__).resolve().parents[1]
-POLICY = json.loads(
-    (ROOT / "governance/responsible_ai_policy.json").read_text(encoding="utf-8")
-)
+POLICY = json.loads((ROOT / "governance/responsible_ai_policy.json").read_text(encoding="utf-8"))
 
 
 def test_governance_report_contains_overall_and_group_metrics() -> None:

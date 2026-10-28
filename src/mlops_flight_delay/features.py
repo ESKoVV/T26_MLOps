@@ -78,9 +78,11 @@ def point_in_time_join(
         & (age <= ttl)
     ].copy()
     eligible["feature_age_hours"] = age.loc[eligible.index].dt.total_seconds() / 3600
-    latest = eligible.sort_values(["request_id", feature_time, available_time]).groupby(
-        "request_id", as_index=False
-    ).tail(1)
+    latest = (
+        eligible.sort_values(["request_id", feature_time, available_time])
+        .groupby("request_id", as_index=False)
+        .tail(1)
+    )
     selected = latest[
         ["request_id", feature_time, available_time, "feature_age_hours", *feature_columns]
     ]
@@ -105,9 +107,13 @@ def build_feature_audit(
         | (correct[available_time] > correct[event_time])
     ).fillna(False)
     missing = correct[feature_columns].isna().any(axis=1)
-    changed = naive[feature_columns].fillna("<missing>").astype(str).ne(
-        correct[feature_columns].fillna("<missing>").astype(str)
-    ).any(axis=1)
+    changed = (
+        naive[feature_columns]
+        .fillna("<missing>")
+        .astype(str)
+        .ne(correct[feature_columns].fillna("<missing>").astype(str))
+        .any(axis=1)
+    )
     rows = len(entities)
     return {
         "schema_version": "1.0.0",

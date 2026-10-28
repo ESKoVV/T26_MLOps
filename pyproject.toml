@@ -20,7 +20,7 @@ dependencies = [
 dev = [
   "httpx>=0.28,<1",
   "pytest>=8.3,<9",
-  "ruff>=0.8,<1",
+  "ruff>=0.17,<0.18",
 ]
 data = [
   "dvc>=3,<4",
