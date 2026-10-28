@@ -4,6 +4,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from mlops_flight_delay.split import chronological_bounds
 from mlops_flight_delay.validate_data import validate_dataset
 
 ROOT = Path(__file__).parents[1]
@@ -115,18 +116,61 @@ def test_contract_violation_is_detected(tmp_path: Path, mutation, failed_check: 
 def test_report_contains_chronological_split() -> None:
     result = validate_dataset(ROOT / "data" / "flights_sample.csv", CONTRACT)
     split = result["split"]
-    assert split["policy"] == "chronological-60-20-20"
+    assert split["policy"] == "chronological-60-20-20-by-date"
     assert [split[part]["rows"] for part in ("train", "validation", "test")] == [14, 5, 5]
     assert split["train"]["end"] < split["validation"]["start"]
     assert split["validation"]["end"] < split["test"]["start"]
     assert split["ordered"] is True
 
 
-def test_overlapping_periods_fail_split_check(tmp_path: Path) -> None:
+def test_split_never_cuts_inside_one_day() -> None:
+    dates = pd.Series(["2026-01-01"] * 4 + ["2026-01-02"] * 4 + ["2026-01-03"] * 2)
+    train_end, validation_end = chronological_bounds(dates)
+    # 60 % = row 6 and 80 % = row 8 fall inside / at the start of a day -> snap to day start
+    assert (train_end, validation_end) == (4, 8)
+
+
+def test_one_row_per_day_keeps_row_fractions() -> None:
+    dates = pd.Series(pd.date_range("2026-01-01", periods=24))
+    assert chronological_bounds(dates) == (14, 19)
+
+
+def test_split_with_single_day_has_empty_parts(tmp_path: Path) -> None:
     frame = _valid_frame()
-    frame["FlightDate"] = ["2026-01-01"] * 14 + ["2026-01-02"] * 6
-    path = tmp_path / "overlap.csv"
+    frame["FlightDate"] = "2026-01-01"
+    path = tmp_path / "one_day.csv"
     frame.to_csv(path, index=False)
     result = validate_dataset(path, CONTRACT)
     assert result["split"]["ordered"] is False
     assert result["passed"] is False
+
+
+BTS_CONTRACT = ROOT / "data" / "contract_bts.json"
+
+
+def _bts_frame(rows: int = 20000) -> pd.DataFrame:
+    frame = _valid_frame(rows)
+    frame.insert(1, "Carrier", "DL")
+    frame.insert(2, "FlightNumber", [1 + index % 9999 for index in range(rows)])
+    days = pd.date_range("2026-01-01", periods=40).strftime("%Y-%m-%d")
+    frame["FlightDate"] = [days[index * 40 // rows] for index in range(rows)]
+    return frame
+
+
+def test_bts_contract_accepts_fragment_shape(tmp_path: Path) -> None:
+    path = tmp_path / "bts.csv"
+    _bts_frame().to_csv(path, index=False)
+    result = validate_dataset(path, BTS_CONTRACT)
+    assert result["passed"] is True, [item for item in result["checks"] if not item["passed"]]
+    assert result["split"]["ordered"] is True
+
+
+def test_bts_contract_rejects_bad_carrier_code(tmp_path: Path) -> None:
+    frame = _bts_frame()
+    frame.loc[0, "Carrier"] = "delta"
+    path = tmp_path / "bts_bad.csv"
+    frame.to_csv(path, index=False)
+    result = validate_dataset(path, BTS_CONTRACT)
+    assert any(
+        item["name"] == "Carrier.pattern" and not item["passed"] for item in result["checks"]
+    )

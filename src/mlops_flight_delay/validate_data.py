@@ -8,28 +8,19 @@ from typing import Any
 
 import pandas as pd
 
+from mlops_flight_delay.split import SPLIT_POLICY, chronological_bounds, sort_by_event_time
+
 
 def _check(name: str, passed: bool, details: str) -> dict[str, Any]:
     return {"name": name, "passed": bool(passed), "details": details}
 
 
-SPLIT_FRACTIONS = (0.6, 0.8)
-SPLIT_POLICY = "chronological-60-20-20"
-
-
 def chronological_split_summary(
     data: pd.DataFrame, *, target_threshold: int = 15
 ) -> dict[str, Any]:
-    """Describe the train/validation/test periods used by training.
-
-    Boundaries follow train.py: rows are sorted by FlightDate and cut at 60 % and 80 %.
-    Positive class is ArrDelay >= target_threshold.
-    """
-    frame = data.copy()
-    frame["FlightDate"] = pd.to_datetime(frame["FlightDate"], errors="raise")
-    frame = frame.sort_values("FlightDate", kind="stable").reset_index(drop=True)
-    train_end = int(len(frame) * SPLIT_FRACTIONS[0])
-    validation_end = int(len(frame) * SPLIT_FRACTIONS[1])
+    """Describe the train/validation/test periods exactly as training will cut them."""
+    frame = sort_by_event_time(data)
+    train_end, validation_end = chronological_bounds(frame["FlightDate"])
     parts = {
         "train": frame.iloc[:train_end],
         "validation": frame.iloc[train_end:validation_end],
@@ -119,6 +110,10 @@ def validate_dataset(data_path: Path, contract_path: Path) -> dict[str, Any]:
             parsed = pd.to_datetime(series, format=rules.get("format"), errors="coerce")
             invalid = int((parsed.isna() & series.notna()).sum())
             checks.append(_check(f"{column}.date", invalid == 0, f"invalid={invalid}"))
+
+        if rules.get("type") == "string" and "pattern" in rules:
+            mismatched = int((~series.dropna().astype(str).str.fullmatch(rules["pattern"])).sum())
+            checks.append(_check(f"{column}.pattern", mismatched == 0, f"mismatched={mismatched}"))
 
         if "allowed_values" in rules:
             allowed = set(rules["allowed_values"])
