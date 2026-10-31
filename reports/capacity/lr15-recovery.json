@@ -1,0 +1,7 @@
+{
+  "stopped_at": "2026-10-28T16:32:10.770Z",
+  "ready_at": "2026-10-28T16:32:12.509Z",
+  "recovery_seconds": 1.739,
+  "old_pid_killed": true,
+  "method": "kill single-worker uvicorn, start a new process, poll /readyz every 0.1 s; includes 0.5 s pause after kill"
+}
