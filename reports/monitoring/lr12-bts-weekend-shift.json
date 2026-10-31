@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "policy_version": "1.0.0-team-3-bts",
+  "drift": {
+    "status": "alert",
+    "reference_rows": 27436,
+    "current_rows": 2224,
+    "features": {
+      "DepHour": {
+        "method": "psi_reference_bins",
+        "score": 0.005093,
+        "status": "ok"
+      },
+      "IsWeekend": {
+        "method": "psi_categories",
+        "score": 17.145887,
+        "status": "alert"
+      }
+    }
+  },
+  "delayed_quality": {
+    "as_of": "2026-03-01T12:00:00+00:00",
+    "eligible_cutoff": "2026-02-28T12:00:00+00:00",
+    "eligible_predictions": 1842,
+    "matched_labels": 1842,
+    "label_coverage": 1.0,
+    "metrics": {
+      "roc_auc": 0.66813,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "status": "ok",
+    "breached_metrics": []
+  },
+  "decision": {
+    "action": "investigate",
+    "reason": "Drift есть, но качество пока не деградировало"
+  }
+}

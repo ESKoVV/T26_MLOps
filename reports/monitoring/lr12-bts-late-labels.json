@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0.0",
+  "policy_version": "1.0.0-team-3-bts",
+  "drift": {
+    "status": "ok",
+    "reference_rows": 27436,
+    "current_rows": 9651,
+    "features": {
+      "DepHour": {
+        "method": "psi_reference_bins",
+        "score": 0.003909,
+        "status": "ok"
+      },
+      "IsWeekend": {
+        "method": "psi_categories",
+        "score": 0.000909,
+        "status": "ok"
+      }
+    }
+  },
+  "delayed_quality": {
+    "as_of": "2026-03-01T12:00:00+00:00",
+    "eligible_cutoff": "2026-02-28T12:00:00+00:00",
+    "eligible_predictions": 9269,
+    "matched_labels": 7418,
+    "label_coverage": 0.800302,
+    "metrics": {},
+    "status": "insufficient_evidence"
+  },
+  "decision": {
+    "action": "hold",
+    "reason": "Недостаточно зрелых и сопоставленных меток"
+  }
+}
