@@ -12,7 +12,8 @@ models/*.joblib
 
 *.egg-info/
 reports/validation/
-reports/tests/
+reports/tests/*
 reports/openapi/ci-openapi.json
 data/raw/
 data/processed/
+!reports/tests/lr5-pass.xml
