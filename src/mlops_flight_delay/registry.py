@@ -15,6 +15,8 @@ from mlops_flight_delay.train import FEATURES
 
 FULL_SHA = re.compile(r"^[0-9a-fA-F]{40}$")
 
+SKOPS_TRUSTED_TYPES = ["sklearn.tree._tree.Tree"]
+
 
 def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
@@ -48,9 +50,7 @@ def validate_candidate_inputs(
         raise ValueError("Upstream summary has no metrics.roc_auc")
     roc_auc = float(metrics["roc_auc"])
     if roc_auc < minimum_roc_auc:
-        raise ValueError(
-            f"Quality gate failed: ROC AUC {roc_auc:.3f} < {minimum_roc_auc:.3f}"
-        )
+        raise ValueError(f"Quality gate failed: ROC AUC {roc_auc:.3f} < {minimum_roc_auc:.3f}")
     actual_hash = sha256_file(data_path)
     expected_hash = summary.get("prepared_sha256")
     if actual_hash != expected_hash:
@@ -153,6 +153,10 @@ def register_candidate(args: argparse.Namespace) -> dict[str, Any]:
             name="model",
             signature=signature,
             input_example=input_example,
+            # MLflow 3.17 serializes sklearn models with skops and refuses to load tree nodes
+            # unless they are trusted explicitly. The model is trained by this pipeline, so the
+            # single reviewed type is trusted instead of switching back to pickle.
+            skops_trusted_types=SKOPS_TRUSTED_TYPES,
         )
         run_id = run.info.run_id
 
@@ -334,4 +338,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

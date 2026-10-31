@@ -76,4 +76,3 @@ def test_release_manifest_uses_exact_version_and_previous_champion() -> None:
     assert manifest["previous_champion_version"] == "1"
     assert manifest["decision"] == {"status": "approved", "approved_by": "reviewer"}
     json.dumps(manifest)
-

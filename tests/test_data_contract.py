@@ -29,7 +29,9 @@ def test_range_violation_is_detected(tmp_path: Path) -> None:
     bad_data.to_csv(path, index=False)
     result = validate_dataset(path, CONTRACT)
     assert result["passed"] is False
-    assert any(item["name"] == "DepHour.maximum" and not item["passed"] for item in result["checks"])
+    assert any(
+        item["name"] == "DepHour.maximum" and not item["passed"] for item in result["checks"]
+    )
 
 
 def test_schema_violation_is_detected(tmp_path: Path) -> None:

@@ -96,9 +96,13 @@ def run_experiment(
         split_path = temp / "split_manifest.json"
         metrics_path = temp / "metrics.json"
         validation_path = temp / "validation_report.json"
-        split_path.write_text(json.dumps(split_manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+        split_path.write_text(
+            json.dumps(split_manifest, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
         metrics_path.write_text(json.dumps(metrics, ensure_ascii=False, indent=2), encoding="utf-8")
-        validation_path.write_text(json.dumps(validation, ensure_ascii=False, indent=2), encoding="utf-8")
+        validation_path.write_text(
+            json.dumps(validation, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
 
         training_input = mlflow.data.from_pandas(
             train_frame.assign(target=(train_frame["ArrDelay"] >= 15).astype(int)),

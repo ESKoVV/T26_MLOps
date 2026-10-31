@@ -26,9 +26,7 @@ def test_metrics_expose_bounded_route_status_and_model_identity(tmp_path: Path) 
         metrics = client.get("/metrics").text
 
     assert 'http_requests_total{method="POST",route="/predict",status="200"}' in metrics
-    bucket = (
-        'http_request_duration_seconds_bucket{le="0.5",method="POST",route="/predict"}'
-    )
+    bucket = 'http_request_duration_seconds_bucket{le="0.5",method="POST",route="/predict"}'
     assert bucket in metrics
     assert 'model_info{model_name="flight-delay-classifier",model_version="0.2.0"' in metrics
     assert "lr11-metrics-test" not in metrics
@@ -44,9 +42,7 @@ def test_structured_log_correlates_request_without_payload(tmp_path: Path, caplo
         )
     assert response.status_code == 200
     records = [
-        json.loads(record.message)
-        for record in caplog.records
-        if record.message.startswith("{")
+        json.loads(record.message) for record in caplog.records if record.message.startswith("{")
     ]
     event = next(record for record in records if record["request_id"] == "lr11-log-test")
     assert event["route"] == "/predict"
@@ -62,4 +58,3 @@ def test_validation_failure_has_bounded_route_label(tmp_path: Path) -> None:
         metrics = client.get("/metrics").text
     assert response.status_code == 422
     assert 'http_requests_total{method="POST",route="/predict",status="422"}' in metrics
-

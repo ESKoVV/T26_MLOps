@@ -88,8 +88,7 @@ def build_governance_report(
     f1_gap = max(eligible_f1) - min(eligible_f1) if len(eligible_f1) >= 2 else None
     checks = {
         "minimum_overall_f1": overall["f1"] >= float(policy["minimum_overall_f1"]),
-        "maximum_f1_gap": f1_gap is not None
-        and f1_gap <= float(policy["maximum_f1_gap"]),
+        "maximum_f1_gap": f1_gap is not None and f1_gap <= float(policy["maximum_f1_gap"]),
         "enough_groups": len(eligible_f1) >= 2,
     }
     card = audit_model_card(model_card, list(policy["required_model_card_sections"]))

@@ -1,5 +1,0 @@
-# Замените заполнители реальными GitHub-логинами и переименуйте файл в CODEOWNERS.
-* @RELEASE_LEAD @QUALITY_REVIEWER
-/src/ @DATA_MODEL_ENGINEER @QUALITY_REVIEWER
-/.github/ @PLATFORM_ENGINEER @RELEASE_LEAD
-/docs/ @DOCUMENTATION_RISK_REVIEWER @RELEASE_LEAD
