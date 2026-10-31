@@ -22,4 +22,3 @@ def test_train_creates_versioned_bundle(tmp_path: Path) -> None:
         "max_depth": 4,
         "random_state": 42,
     }
-

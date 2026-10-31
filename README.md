@@ -1,6 +1,35 @@
-# Flight Delay MLOps starter
+# Flight Delay MLOps — команда team-3
 
-Базовый проект для последовательного выполнения лабораторных работ курса MLOps 2026–2027.
+Учебный проект курса «Управление процессами машинного обучения (MLOps)» 2026–2027, ДГТУ, группа Т.МО41.
+Прогноз задержки прибытия рейса не менее чем на 15 минут за 60 минут до планового отправления.
+
+- Тимлид: Еськов Владимир (@ESKoVV). Состав и роли: [docs/team-roles.md](docs/team-roles.md).
+- Границы проекта: [ADR 0001](docs/adr/0001-project-boundaries.md).
+- Правила веток, PR и review: [CONTRIBUTING.md](CONTRIBUTING.md).
+- Ветка команды у преподавателя: `Irina-64/T26_MLOps:team-3`.
+
+## Лабораторные работы team-3
+
+| ЛР | Тема | PR | Главное |
+|---|---|---|---|
+| 1 | Репозиторий и среда | #2 | 5 дефектов CI стартового проекта, `requirements.lock`, ADR 0001 |
+| 2 | Контракт данных | #4 | разбиение по календарным дням, контракт BTS |
+| 3 | DVC | #6 | фрагмент BTS ATL v1/v2, протокол восстановления |
+| 4 | MLflow Tracking | #8 | 2 run, исправлен `data.dvc_hash` |
+| 5 | Тесты | #10 | defect injection, повреждённая модель |
+| 6 | Контейнер | — | ждёт Docker на машине тимлида; образ собирает CI |
+| 7 | Контракт API | #12 | строгий request ID, 500 `ErrorResponse` |
+| 8 | CI | #14 | controlled failure, actions по SHA, защита веток |
+| 9 | Prefect | #16 | retry только для `OSError` |
+| 10 | Registry | #18 | pyfunc `predict_proba`, запрет самоодобрения, rollback |
+| 11 | Наблюдаемость | — | ждёт Docker (Prometheus/Grafana) |
+| 12 | Drift | #20 | окна BTS, coverage, решения |
+| 13 | Point-in-time | #22 | утечка same-day завышает AUC 0.58 → 0.68 |
+| 14 | Governance | #24 | model card 2.0.0, порог по validation, F1 gap |
+| 15 | Capacity | #26 | bottleneck — CPU одного процесса |
+| 16 | Release | #28 | manifest, проверка claims; draft до независимого approval |
+
+Отчёты по каждой ЛР — в `docs/` (ссылки в PR), evidence cards — `docs/evidence/lrN-evidence-card-<login>.md`.
 
 ## Быстрый старт
 
@@ -14,6 +43,24 @@ uvicorn mlops_flight_delay.api:app --host 0.0.0.0 --port 8080
 ```
 
 Перед установкой активируйте окружение: `.venv\Scripts\Activate.ps1` в Windows PowerShell или `source .venv/bin/activate` в Linux и macOS.
+
+Нужен Python 3.12 (зафиксирован в `.python-version`). Если системный Python другой версии,
+окружение можно создать через [uv](https://docs.astral.sh/uv/) — он сам скачает 3.12:
+
+```bash
+uv venv -p 3.12 .venv
+source .venv/bin/activate
+uv pip install -e ".[dev]"
+```
+
+Точные проверенные версии лежат в `requirements.lock`. Без него резолвер может выбрать
+несовместимую пару (например, prefect 3.8.8 с fastapi 0.162 падает на старте flow):
+
+```bash
+python -m pip install -c requirements.lock -e ".[dev,data,tracking,orchestration]"
+```
+
+Проверено 2026-10-28 на Linux (CachyOS), Python 3.12.16: `ruff check .` без замечаний, `pytest -q` проходит.
 
 Проверка:
 
@@ -275,4 +322,4 @@ immutable image identity, API version, CI, hashes evidence, approvals и rollbac
 - решения оформляются в `docs/adr/`;
 - каждый участник заполняет собственную evidence card в `docs/evidence/`.
 
-Скопируйте `CODEOWNERS.example` в `CODEOWNERS`, заменив заполнители реальными GitHub-логинами команды.
+`CODEOWNERS` содержит GitHub-логины команды; новые участники добавляются отдельным PR.

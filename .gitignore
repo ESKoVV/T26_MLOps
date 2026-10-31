@@ -10,3 +10,19 @@ mlflow.db
 .env
 models/*.joblib
 
+*.egg-info/
+reports/validation/
+reports/tests/*
+reports/openapi/ci-openapi.json
+data/raw/
+data/processed/
+!reports/tests/lr5-pass.xml
+reports/prefect/**/prepared.csv
+reports/prefect/ci/
+data/monitoring/bts/
+data/features/bts/
+reports/features/lr13-bts/*.csv
+reports/features/lr13-ci/
+data/governance/bts_evaluation.csv
+reports/governance/lr14-ci.json
+!reports/releases/lr16-manifest.json

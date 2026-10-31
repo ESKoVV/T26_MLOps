@@ -24,7 +24,9 @@ spec:
           type: RuntimeDefault
       containers:
         - name: api
-          image: flight-delay-api:1.1.0
+          # Immutable reference: the image CI builds is tagged with the full commit SHA
+          # (mlops-flight-delay:${GITHUB_SHA}); pin the pushed digest at release time.
+          image: mlops-flight-delay@sha256:REPLACE_WITH_RELEASE_DIGEST
           ports:
             - containerPort: 8080
           readinessProbe:
@@ -47,15 +49,26 @@ spec:
             periodSeconds: 2
             failureThreshold: 30
           resources:
+            # LR15: one uvicorn worker saturated about one core in the burst profile
+            # (10 concurrent clients, ~100 rps); 100m made the 60 % HPA target trip at once.
             requests:
-              cpu: 100m
-              memory: 128Mi
-            limits:
               cpu: 500m
+              memory: 256Mi
+            limits:
+              cpu: "1"
               memory: 512Mi
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities:
               drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        # readOnlyRootFilesystem needs a writable /tmp, as tmpfs in compose.yaml
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
 

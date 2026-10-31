@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0.0",
+  "contract_version": "1.0.0",
+  "entity_rows": 9651,
+  "naive_leakage_rows": 9651,
+  "point_in_time_leakage_rows": 0,
+  "rows_changed_vs_naive": 9591,
+  "feature_coverage": 1.0,
+  "missing_rate": 0.0,
+  "maximum_missing_rate": 0.01,
+  "max_feature_age_hours": 29.0,
+  "failures": [],
+  "status": "pass"
+}

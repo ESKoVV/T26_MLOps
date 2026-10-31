@@ -1,0 +1,131 @@
+15:51:39.425 | INFO    | prefect - Starting temporary server on http://127.0.0.1:8017
+See https://docs.prefect.io/v3/concepts/server#how-to-guides for more information on running a dedicated Prefect server.
+15:51:41.812 | INFO    | Flow run 'flight-delay-rs-42' - Beginning flow run 'flight-delay-rs-42' for flow 'flight-delay-training'
+15:51:41.892 | INFO    | Task run 'validate-986' - Data contract passed for 45954 rows
+15:51:41.893 | INFO    | Task run 'validate-986' - Finished in state Completed()
+15:51:41.969 | INFO    | Task run 'preprocess-0c1' - Prepared 45954 rows; sha256=78721daf85b396674e95464ca6aae151dedc7db86c480d5aef881ab4187fcace
+15:51:41.971 | INFO    | Task run 'preprocess-0c1' - Finished in state Completed()
+15:51:42.331 | INFO    | Task run 'train-faf' - Model trained; validation ROC AUC=0.576
+15:51:42.333 | INFO    | Task run 'train-faf' - Finished in state Completed()
+15:51:42.384 | ERROR   | Task run 'evaluate-264' - Task run failed with exception: ValueError('Quality gate failed: test ROC AUC 0.631 < 1.100; see reports/prefect/lr9-quality-fail/04-evaluation.json')
+Traceback (most recent call last):
+  File "<site-packages>/prefect/task_engine.py", line 1030, in run_context
+    yield self
+  File "<site-packages>/prefect/task_engine.py", line 1699, in run_task_sync
+    engine.call_task_fn(txn)
+  File "<site-packages>/prefect/task_engine.py", line 1047, in call_task_fn
+    result = call_with_parameters(self.task.fn, parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<site-packages>/prefect/utilities/callables/__init__.py", line 404, in call_with_parameters
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "src/mlops_flight_delay/orchestration.py", line 182, in evaluate_task
+    result = evaluate_stage(
+             ^^^^^^^^^^^^^^^
+  File "src/mlops_flight_delay/orchestration.py", line 104, in evaluate_stage
+    raise ValueError(
+ValueError: Quality gate failed: test ROC AUC 0.631 < 1.100; see reports/prefect/lr9-quality-fail/04-evaluation.json
+15:51:42.388 | ERROR   | Task run 'evaluate-264' - Finished in state Failed('Task run encountered an exception ValueError: Quality gate failed: test ROC AUC 0.631 < 1.100; see reports/prefect/lr9-quality-fail/04-evaluation.json')
+15:51:42.822 | ERROR   | Flow run 'flight-delay-rs-42' - Encountered exception during execution: ValueError('Quality gate failed: test ROC AUC 0.631 < 1.100; see reports/prefect/lr9-quality-fail/04-evaluation.json')
+Traceback (most recent call last):
+  File "<site-packages>/prefect/flow_engine.py", line 1330, in run_context
+    yield self
+  File "<site-packages>/prefect/flow_engine.py", line 2111, in run_flow_sync
+    engine.call_flow_fn()
+  File "<site-packages>/prefect/flow_engine.py", line 1350, in call_flow_fn
+    result = call_with_parameters(self.flow.fn, self.parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<site-packages>/prefect/utilities/callables/__init__.py", line 404, in call_with_parameters
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "src/mlops_flight_delay/orchestration.py", line 230, in training_flow
+    evaluation = evaluate_task(
+                 ^^^^^^^^^^^^^^
+  File "<site-packages>/prefect/tasks.py", line 1240, in __call__
+    return run_task(
+           ^^^^^^^^^
+  File "<site-packages>/prefect/task_engine.py", line 1932, in run_task
+    return run_task_sync(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "<site-packages>/prefect/task_engine.py", line 1702, in run_task_sync
+    return engine.state if return_type == "state" else engine.result()
+                                                       ^^^^^^^^^^^^^^^
+  File "<site-packages>/prefect/task_engine.py", line 622, in result
+    raise self._raised
+  File "<site-packages>/prefect/task_engine.py", line 1030, in run_context
+    yield self
+  File "<site-packages>/prefect/task_engine.py", line 1699, in run_task_sync
+    engine.call_task_fn(txn)
+  File "<site-packages>/prefect/task_engine.py", line 1047, in call_task_fn
+    result = call_with_parameters(self.task.fn, parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<site-packages>/prefect/utilities/callables/__init__.py", line 404, in call_with_parameters
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "src/mlops_flight_delay/orchestration.py", line 182, in evaluate_task
+    result = evaluate_stage(
+             ^^^^^^^^^^^^^^^
+  File "src/mlops_flight_delay/orchestration.py", line 104, in evaluate_stage
+    raise ValueError(
+ValueError: Quality gate failed: test ROC AUC 0.631 < 1.100; see reports/prefect/lr9-quality-fail/04-evaluation.json
+15:51:42.878 | INFO    | Flow run 'flight-delay-rs-42' - Finished in state Failed('Flow run encountered an exception: ValueError: Quality gate failed: test ROC AUC 0.631 < 1.100; see reports/prefect/lr9-quality-fail/04-evaluation.json')
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "src/mlops_flight_delay/orchestration.py", line 280, in <module>
+    main()
+  File "src/mlops_flight_delay/orchestration.py", line 264, in main
+    result = training_flow(
+             ^^^^^^^^^^^^^^
+  File "<site-packages>/prefect/flows.py", line 1887, in __call__
+    return run_flow(
+           ^^^^^^^^^
+  File "<site-packages>/prefect/flow_engine.py", line 2268, in run_flow
+    ret_val = run_flow_sync(**kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+  File "<site-packages>/prefect/flow_engine.py", line 2113, in run_flow_sync
+    return engine.state if return_type == "state" else engine.result()
+                                                       ^^^^^^^^^^^^^^^
+  File "<site-packages>/prefect/flow_engine.py", line 788, in result
+    raise self._raised
+  File "<site-packages>/prefect/flow_engine.py", line 1330, in run_context
+    yield self
+  File "<site-packages>/prefect/flow_engine.py", line 2111, in run_flow_sync
+    engine.call_flow_fn()
+  File "<site-packages>/prefect/flow_engine.py", line 1350, in call_flow_fn
+    result = call_with_parameters(self.flow.fn, self.parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<site-packages>/prefect/utilities/callables/__init__.py", line 404, in call_with_parameters
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "src/mlops_flight_delay/orchestration.py", line 230, in training_flow
+    evaluation = evaluate_task(
+                 ^^^^^^^^^^^^^^
+  File "<site-packages>/prefect/tasks.py", line 1240, in __call__
+    return run_task(
+           ^^^^^^^^^
+  File "<site-packages>/prefect/task_engine.py", line 1932, in run_task
+    return run_task_sync(**kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "<site-packages>/prefect/task_engine.py", line 1702, in run_task_sync
+    return engine.state if return_type == "state" else engine.result()
+                                                       ^^^^^^^^^^^^^^^
+  File "<site-packages>/prefect/task_engine.py", line 622, in result
+    raise self._raised
+  File "<site-packages>/prefect/task_engine.py", line 1030, in run_context
+    yield self
+  File "<site-packages>/prefect/task_engine.py", line 1699, in run_task_sync
+    engine.call_task_fn(txn)
+  File "<site-packages>/prefect/task_engine.py", line 1047, in call_task_fn
+    result = call_with_parameters(self.task.fn, parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<site-packages>/prefect/utilities/callables/__init__.py", line 404, in call_with_parameters
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "src/mlops_flight_delay/orchestration.py", line 182, in evaluate_task
+    result = evaluate_stage(
+             ^^^^^^^^^^^^^^^
+  File "src/mlops_flight_delay/orchestration.py", line 104, in evaluate_stage
+    raise ValueError(
+ValueError: Quality gate failed: test ROC AUC 0.631 < 1.100; see reports/prefect/lr9-quality-fail/04-evaluation.json
+15:51:42.891 | INFO    | prefect - Stopping temporary server on http://127.0.0.1:8017

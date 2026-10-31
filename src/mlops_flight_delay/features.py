@@ -78,9 +78,11 @@ def point_in_time_join(
         & (age <= ttl)
     ].copy()
     eligible["feature_age_hours"] = age.loc[eligible.index].dt.total_seconds() / 3600
-    latest = eligible.sort_values(["request_id", feature_time, available_time]).groupby(
-        "request_id", as_index=False
-    ).tail(1)
+    latest = (
+        eligible.sort_values(["request_id", feature_time, available_time])
+        .groupby("request_id", as_index=False)
+        .tail(1)
+    )
     selected = latest[
         ["request_id", feature_time, available_time, "feature_age_hours", *feature_columns]
     ]
@@ -105,10 +107,21 @@ def build_feature_audit(
         | (correct[available_time] > correct[event_time])
     ).fillna(False)
     missing = correct[feature_columns].isna().any(axis=1)
-    changed = naive[feature_columns].fillna("<missing>").astype(str).ne(
-        correct[feature_columns].fillna("<missing>").astype(str)
-    ).any(axis=1)
+    changed = (
+        naive[feature_columns]
+        .fillna("<missing>")
+        .astype(str)
+        .ne(correct[feature_columns].fillna("<missing>").astype(str))
+        .any(axis=1)
+    )
     rows = len(entities)
+    missing_rate = float(missing.mean()) if rows else 1.0
+    maximum_missing_rate = float(contract.get("maximum_missing_rate", 0.0))
+    failures = []
+    if correct_leaks.any():
+        failures.append("point_in_time_leakage")
+    if missing_rate > maximum_missing_rate:
+        failures.append("missing_rate_above_contract")
     return {
         "schema_version": "1.0.0",
         "contract_version": contract["contract_version"],
@@ -116,13 +129,16 @@ def build_feature_audit(
         "naive_leakage_rows": int(naive_leaks.sum()),
         "point_in_time_leakage_rows": int(correct_leaks.sum()),
         "rows_changed_vs_naive": int(changed.sum()),
-        "feature_coverage": round(1.0 - float(missing.mean()), 6) if rows else 0.0,
+        "feature_coverage": round(1.0 - missing_rate, 6) if rows else 0.0,
+        "missing_rate": round(missing_rate, 6),
+        "maximum_missing_rate": maximum_missing_rate,
         "max_feature_age_hours": (
             round(float(correct["feature_age_hours"].max()), 6)
             if correct["feature_age_hours"].notna().any()
             else None
         ),
-        "status": "pass" if not correct_leaks.any() else "fail",
+        "failures": failures,
+        "status": "fail" if failures else "pass",
     }
 
 
@@ -147,6 +163,7 @@ def main() -> None:
         json.dumps(audit, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     print(json.dumps(audit, ensure_ascii=False, indent=2))
+    raise SystemExit(0 if audit["status"] == "pass" else 1)
 
 
 if __name__ == "__main__":

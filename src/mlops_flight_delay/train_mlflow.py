@@ -13,8 +13,9 @@ import mlflow.data
 import pandas as pd
 from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
 
-from mlops_flight_delay.train import FEATURES, train_model
-from mlops_flight_delay.validate_data import validate_dataset
+from mlops_flight_delay.split import SPLIT_POLICY, chronological_bounds, sort_by_event_time
+from mlops_flight_delay.train import FEATURES, delay_target, train_model
+from mlops_flight_delay.validate_data import read_dvc_md5, validate_dataset
 
 
 def _git(args: list[str], default: str = "unknown") -> str:
@@ -30,10 +31,7 @@ def _dvc_hash(data_path: Path) -> str:
     metafile = data_path.with_suffix(data_path.suffix + ".dvc")
     if not metafile.exists():
         return "not-tracked"
-    for line in metafile.read_text(encoding="utf-8").splitlines():
-        if line.strip().startswith("md5:"):
-            return line.split(":", 1)[1].strip()
-    return "unknown"
+    return read_dvc_md5(metafile) or "unknown"
 
 
 def run_experiment(
@@ -43,19 +41,19 @@ def run_experiment(
     n_estimators: int,
     max_depth: int,
     random_state: int,
+    *,
+    team_code: str = "team-3",
+    hypothesis: str = "",
 ) -> str:
     validation = validate_dataset(data_path, contract_path)
     if not validation["passed"]:
         raise ValueError("Набор не прошёл контракт данных")
 
-    frame = pd.read_csv(data_path)
-    frame["FlightDate"] = pd.to_datetime(frame["FlightDate"], errors="raise")
-    frame = frame.sort_values("FlightDate").reset_index(drop=True)
-    train_end = int(len(frame) * 0.6)
-    validation_end = int(len(frame) * 0.8)
+    frame = sort_by_event_time(pd.read_csv(data_path))
+    train_end, validation_end = chronological_bounds(frame["FlightDate"])
     train_frame = frame.iloc[:train_end].copy()
     validation_frame = frame.iloc[train_end:validation_end].copy()
-    validation_target = (validation_frame["ArrDelay"] >= 15).astype(int)
+    validation_target = delay_target(validation_frame["ArrDelay"])
     if validation_target.nunique() < 2:
         raise ValueError("Validation-период должен содержать оба класса")
 
@@ -82,9 +80,11 @@ def run_experiment(
                 recall_score(validation_target, predictions, zero_division=0)
             ),
             "validation_f1": float(f1_score(validation_target, predictions, zero_division=0)),
+            "validation_positive_rate": float(validation_target.mean()),
+            "validation_mean_probability": float(probabilities.mean()),
         }
         split_manifest = {
-            "policy": "chronological-60-20-20",
+            "policy": SPLIT_POLICY,
             "rows": len(frame),
             "train_rows": train_end,
             "validation_rows": validation_end - train_end,
@@ -93,15 +93,43 @@ def run_experiment(
             "validation_end": str(frame.iloc[validation_end - 1]["FlightDate"].date()),
             "test_end": str(frame.iloc[-1]["FlightDate"].date()),
         }
+        run_name = f"rf-depth-{max_depth}-n{n_estimators}"
+        summary_path = temp / "run_summary.md"
+        summary_path.write_text(
+            "\n".join(
+                [
+                    f"# {run_name}",
+                    "",
+                    f"- data: `{data_path.as_posix()}`, rows {len(frame)}",
+                    (
+                        f"- split: {split_manifest['train_end']} | "
+                        f"{split_manifest['validation_end']} | {split_manifest['test_end']}"
+                        f" ({SPLIT_POLICY})"
+                    ),
+                    f"- validation ROC AUC: {metrics['validation_roc_auc']:.4f}",
+                    f"- validation F1: {metrics['validation_f1']:.4f}",
+                    "",
+                    f"Гипотеза: {hypothesis or 'не указана'}",
+                    "",
+                    "Test-период в этом run не используется.",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
         split_path = temp / "split_manifest.json"
         metrics_path = temp / "metrics.json"
         validation_path = temp / "validation_report.json"
-        split_path.write_text(json.dumps(split_manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+        split_path.write_text(
+            json.dumps(split_manifest, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
         metrics_path.write_text(json.dumps(metrics, ensure_ascii=False, indent=2), encoding="utf-8")
-        validation_path.write_text(json.dumps(validation, ensure_ascii=False, indent=2), encoding="utf-8")
+        validation_path.write_text(
+            json.dumps(validation, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
 
         training_input = mlflow.data.from_pandas(
-            train_frame.assign(target=(train_frame["ArrDelay"] >= 15).astype(int)),
+            train_frame.assign(target=delay_target(train_frame["ArrDelay"])),
             source=data_path.as_posix(),
             name="flight-delay-train",
             targets="target",
@@ -113,7 +141,7 @@ def run_experiment(
             targets="target",
         )
 
-        with mlflow.start_run(run_name=f"rf-depth-{max_depth}") as run:
+        with mlflow.start_run(run_name=run_name) as run:
             mlflow.log_params(
                 {
                     "algorithm": "RandomForestClassifier",
@@ -121,7 +149,7 @@ def run_experiment(
                     "max_depth": max_depth,
                     "random_state": random_state,
                     "target_threshold_minutes": 15,
-                    "split_policy": "chronological-60-20-20",
+                    "split_policy": SPLIT_POLICY,
                 }
             )
             mlflow.log_metrics(metrics)
@@ -134,14 +162,19 @@ def run_experiment(
                     "data.dvc_hash": _dvc_hash(data_path),
                     "data.sha256": hashlib.sha256(data_path.read_bytes()).hexdigest(),
                     "data.contract_version": validation["contract_version"],
-                    "split.policy": "chronological-60-20-20",
+                    "split.policy": SPLIT_POLICY,
                     "validation.status": "candidate",
+                    "team.code": team_code,
                 }
             )
             mlflow.log_artifact(str(model_path), artifact_path="model")
             mlflow.log_artifact(str(split_path), artifact_path="reports")
             mlflow.log_artifact(str(metrics_path), artifact_path="reports")
             mlflow.log_artifact(str(validation_path), artifact_path="reports")
+            mlflow.log_artifact(str(summary_path), artifact_path="reports")
+            lock = Path("requirements.lock")
+            if lock.exists():
+                mlflow.log_artifact(str(lock), artifact_path="environment")
             return run.info.run_id
 
 
@@ -153,6 +186,8 @@ def main() -> None:
     parser.add_argument("--n-estimators", type=int, default=80)
     parser.add_argument("--max-depth", type=int, default=4)
     parser.add_argument("--random-state", type=int, default=42)
+    parser.add_argument("--team-code", default="team-3")
+    parser.add_argument("--hypothesis", default="")
     args = parser.parse_args()
     run_id = run_experiment(
         args.data,
@@ -161,6 +196,8 @@ def main() -> None:
         args.n_estimators,
         args.max_depth,
         args.random_state,
+        team_code=args.team_code,
+        hypothesis=args.hypothesis,
     )
     print(f"MLflow run_id: {run_id}")
 

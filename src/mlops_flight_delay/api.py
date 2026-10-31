@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import logging
 import os
+import pickle
+import re
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -80,6 +82,23 @@ class ErrorResponse(BaseModel):
     details: list[ErrorItem] = Field(default_factory=list)
 
 
+# Request IDs end up in logs and headers: allow only short opaque tokens, never free text.
+REQUEST_ID_PATTERN = re.compile(r"[A-Za-z0-9._:-]{1,128}")
+
+REQUIRED_BUNDLE_KEYS = {"model", "features", "version"}
+# What joblib/pickle raise on truncated, foreign or incompatible files.
+MODEL_LOAD_ERRORS = (
+    EOFError,
+    OSError,
+    pickle.UnpicklingError,
+    ValueError,
+    TypeError,
+    KeyError,
+    AttributeError,
+    ImportError,
+)
+
+
 def error_payload(
     request: Request,
     *,
@@ -109,13 +128,28 @@ def create_app(model_path: Path | None = None) -> FastAPI:
     async def lifespan(app: FastAPI):
         app.state.model_bundle = None
         if resolved_path.exists():
-            app.state.model_bundle = joblib.load(resolved_path)
+            try:
+                bundle = joblib.load(resolved_path)
+                missing = REQUIRED_BUNDLE_KEYS - set(bundle)
+                if missing:
+                    raise ValueError(f"model bundle is missing keys: {sorted(missing)}")
+                app.state.model_bundle = bundle
+            except MODEL_LOAD_ERRORS as exception:
+                # A damaged file is a deployment error: log it and stop startup instead of
+                # serving with a half-initialized state. A missing file stays "not ready" (503).
+                LOGGER.error(
+                    json.dumps(
+                        {"event": "model_load_failed", "error": type(exception).__name__},
+                        ensure_ascii=False,
+                    )
+                )
+                raise RuntimeError(
+                    f"Model file {resolved_path.name} cannot be loaded"
+                ) from exception
         bundle = app.state.model_bundle or {}
         app.state.model_metadata = {
             "model_name": os.getenv("MODEL_NAME", "flight-delay-classifier"),
-            "model_version": os.getenv(
-                "MODEL_VERSION", str(bundle.get("version", "unavailable"))
-            ),
+            "model_version": os.getenv("MODEL_VERSION", str(bundle.get("version", "unavailable"))),
             "source_commit": os.getenv("SOURCE_COMMIT", "unknown"),
         }
         MODEL_INFO.labels(**app.state.model_metadata).set(1)
@@ -135,7 +169,7 @@ def create_app(model_path: Path | None = None) -> FastAPI:
     async def observability_middleware(request: Request, call_next):
         started = time.perf_counter()
         request_id = request.headers.get("X-Request-ID", "")
-        if not request_id or len(request_id) > 128:
+        if not REQUEST_ID_PATTERN.fullmatch(request_id):
             request_id = str(uuid.uuid4())
         request.state.request_id = request_id
         status = 500
@@ -187,6 +221,30 @@ def create_app(model_path: Path | None = None) -> FastAPI:
             ),
         )
 
+    @api.exception_handler(Exception)
+    async def unhandled_error_handler(request: Request, exception: Exception) -> JSONResponse:
+        request_id = getattr(request.state, "request_id", None) or str(uuid.uuid4())
+        LOGGER.error(
+            json.dumps(
+                {
+                    "event": "unhandled_error",
+                    "request_id": request_id,
+                    "error": type(exception).__name__,
+                },
+                ensure_ascii=False,
+            )
+        )
+        return JSONResponse(
+            status_code=500,
+            content=ErrorResponse(
+                error_code="internal_error",
+                message="Внутренняя ошибка сервиса",
+                request_id=request_id,
+                details=[],
+            ).model_dump(),
+            headers={"X-Request-ID": request_id},
+        )
+
     @api.exception_handler(StarletteHTTPException)
     async def http_error_handler(
         request: Request, exception: StarletteHTTPException
@@ -229,9 +287,7 @@ def create_app(model_path: Path | None = None) -> FastAPI:
             PREDICTIONS.labels(outcome="not_ready", model_version="unavailable").inc()
             raise HTTPException(status_code=503, detail="Модель не загружена")
         try:
-            frame = pd.DataFrame(
-                [{"DepHour": payload.dep_hour, "IsWeekend": payload.is_weekend}]
-            )
+            frame = pd.DataFrame([{"DepHour": payload.dep_hour, "IsWeekend": payload.is_weekend}])
             probability = float(bundle["model"].predict_proba(frame[bundle["features"]])[:, 1][0])
             threshold = 0.5
             model_version = api.state.model_metadata["model_version"]

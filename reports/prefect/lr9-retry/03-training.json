@@ -1,0 +1,9 @@
+{
+  "model_path": "models/lr9-retry.joblib",
+  "validation_roc_auc": 0.5761373693889854,
+  "parameters": {
+    "n_estimators": 120,
+    "max_depth": 8,
+    "random_state": 42
+  }
+}

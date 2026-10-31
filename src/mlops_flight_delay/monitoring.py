@@ -129,9 +129,7 @@ def build_delayed_quality_report(
         prepared_labels["label_time"], utc=True, errors="raise"
     )
     prepared_labels["ArrDelay"] = pd.to_numeric(prepared_labels["ArrDelay"], errors="raise")
-    prepared_labels = prepared_labels[
-        prepared_labels["label_time"] <= as_of.astimezone(UTC)
-    ]
+    prepared_labels = prepared_labels[prepared_labels["label_time"] <= as_of.astimezone(UTC)]
 
     delay = timedelta(hours=float(policy["expected_label_delay_hours"]))
     cutoff = as_of.astimezone(UTC) - delay
@@ -162,9 +160,7 @@ def build_delayed_quality_report(
     metrics = classification_metrics(targets, matched["prediction_probability"])
     result["metrics"] = {name: round(value, 6) for name, value in metrics.items()}
     breached = [
-        name
-        for name in ("roc_auc", "f1")
-        if metrics[name] < float(policy[f"minimum_{name}"])
+        name for name in ("roc_auc", "f1") if metrics[name] < float(policy[f"minimum_{name}"])
     ]
     result["status"] = "quality_breach" if breached else "ok"
     result["breached_metrics"] = breached

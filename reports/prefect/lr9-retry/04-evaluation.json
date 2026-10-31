@@ -1,0 +1,13 @@
+{
+  "model_path": "models/lr9-retry.joblib",
+  "rows": 9651,
+  "threshold": 0.5,
+  "minimum_roc_auc": 0.55,
+  "metrics": {
+    "roc_auc": 0.6312842364379566,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+  },
+  "passed": true
+}

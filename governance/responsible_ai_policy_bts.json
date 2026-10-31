@@ -1,0 +1,28 @@
+{
+  "policy_version": "1.0.0-team-3-bts",
+  "group_column": "IsWeekend",
+  "classification_threshold": 0.19,
+  "minimum_group_rows": 200,
+  "minimum_overall_f1": 0.35,
+  "maximum_f1_gap": 0.25,
+  "required_model_card_sections": [
+    "Краткое описание",
+    "Назначение",
+    "Недопустимое использование",
+    "Модель и данные",
+    "Оценка качества",
+    "Групповые метрики",
+    "Ограничения и риски",
+    "Мониторинг и реакция",
+    "Безопасность и конфиденциальность",
+    "Надзор человека",
+    "Владелец и журнал изменений"
+  ],
+  "prohibited_log_fields": [
+    "raw_features",
+    "access_token",
+    "password",
+    "secret",
+    "personal_data"
+  ]
+}
