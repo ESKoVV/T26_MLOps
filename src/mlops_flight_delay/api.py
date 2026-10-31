@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import pickle
+import re
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -80,6 +81,9 @@ class ErrorResponse(BaseModel):
     request_id: str
     details: list[ErrorItem] = Field(default_factory=list)
 
+
+# Request IDs end up in logs and headers: allow only short opaque tokens, never free text.
+REQUEST_ID_PATTERN = re.compile(r"[A-Za-z0-9._:-]{1,128}")
 
 REQUIRED_BUNDLE_KEYS = {"model", "features", "version"}
 # What joblib/pickle raise on truncated, foreign or incompatible files.
@@ -165,7 +169,7 @@ def create_app(model_path: Path | None = None) -> FastAPI:
     async def observability_middleware(request: Request, call_next):
         started = time.perf_counter()
         request_id = request.headers.get("X-Request-ID", "")
-        if not request_id or len(request_id) > 128:
+        if not REQUEST_ID_PATTERN.fullmatch(request_id):
             request_id = str(uuid.uuid4())
         request.state.request_id = request_id
         status = 500
@@ -215,6 +219,30 @@ def create_app(model_path: Path | None = None) -> FastAPI:
                 message="Запрос не соответствует контракту",
                 details=exception.errors(),
             ),
+        )
+
+    @api.exception_handler(Exception)
+    async def unhandled_error_handler(request: Request, exception: Exception) -> JSONResponse:
+        request_id = getattr(request.state, "request_id", None) or str(uuid.uuid4())
+        LOGGER.error(
+            json.dumps(
+                {
+                    "event": "unhandled_error",
+                    "request_id": request_id,
+                    "error": type(exception).__name__,
+                },
+                ensure_ascii=False,
+            )
+        )
+        return JSONResponse(
+            status_code=500,
+            content=ErrorResponse(
+                error_code="internal_error",
+                message="Внутренняя ошибка сервиса",
+                request_id=request_id,
+                details=[],
+            ).model_dump(),
+            headers={"X-Request-ID": request_id},
         )
 
     @api.exception_handler(StarletteHTTPException)
