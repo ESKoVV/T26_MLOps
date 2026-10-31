@@ -1,0 +1,4 @@
+[core]
+    remote = course-local
+['remote "course-local"']
+    url = ../../dvc-storage
