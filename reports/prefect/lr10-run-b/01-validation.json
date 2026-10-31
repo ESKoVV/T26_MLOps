@@ -1,0 +1,186 @@
+{
+  "contract_version": "1.0.0",
+  "dataset": "flight-delay-bts-atl",
+  "data_file": "data/bts/atl_2026.csv",
+  "sha256": "78721daf85b396674e95464ca6aae151dedc7db86c480d5aef881ab4187fcace",
+  "rows": 45954,
+  "columns": [
+    "FlightDate",
+    "Carrier",
+    "FlightNumber",
+    "DepHour",
+    "IsWeekend",
+    "ArrDelay"
+  ],
+  "passed": true,
+  "checks": [
+    {
+      "name": "required_columns",
+      "passed": true,
+      "details": "missing=[]"
+    },
+    {
+      "name": "extra_columns",
+      "passed": true,
+      "details": "extra=[]"
+    },
+    {
+      "name": "minimum_rows",
+      "passed": true,
+      "details": "rows=45954"
+    },
+    {
+      "name": "duplicate_rows",
+      "passed": true,
+      "details": "duplicates=0"
+    },
+    {
+      "name": "FlightDate.nullable",
+      "passed": true,
+      "details": "nulls=0"
+    },
+    {
+      "name": "FlightDate.date",
+      "passed": true,
+      "details": "invalid=0"
+    },
+    {
+      "name": "Carrier.nullable",
+      "passed": true,
+      "details": "nulls=0"
+    },
+    {
+      "name": "Carrier.pattern",
+      "passed": true,
+      "details": "mismatched=0"
+    },
+    {
+      "name": "FlightNumber.nullable",
+      "passed": true,
+      "details": "nulls=0"
+    },
+    {
+      "name": "FlightNumber.type",
+      "passed": true,
+      "details": "invalid=0"
+    },
+    {
+      "name": "FlightNumber.integer",
+      "passed": true,
+      "details": "non_integer=0"
+    },
+    {
+      "name": "FlightNumber.minimum",
+      "passed": true,
+      "details": "below=0"
+    },
+    {
+      "name": "FlightNumber.maximum",
+      "passed": true,
+      "details": "above=0"
+    },
+    {
+      "name": "DepHour.nullable",
+      "passed": true,
+      "details": "nulls=0"
+    },
+    {
+      "name": "DepHour.type",
+      "passed": true,
+      "details": "invalid=0"
+    },
+    {
+      "name": "DepHour.integer",
+      "passed": true,
+      "details": "non_integer=0"
+    },
+    {
+      "name": "DepHour.minimum",
+      "passed": true,
+      "details": "below=0"
+    },
+    {
+      "name": "DepHour.maximum",
+      "passed": true,
+      "details": "above=0"
+    },
+    {
+      "name": "IsWeekend.nullable",
+      "passed": true,
+      "details": "nulls=0"
+    },
+    {
+      "name": "IsWeekend.type",
+      "passed": true,
+      "details": "invalid=0"
+    },
+    {
+      "name": "IsWeekend.integer",
+      "passed": true,
+      "details": "non_integer=0"
+    },
+    {
+      "name": "IsWeekend.allowed_values",
+      "passed": true,
+      "details": "invalid_values=[]"
+    },
+    {
+      "name": "ArrDelay.nullable",
+      "passed": true,
+      "details": "nulls=0"
+    },
+    {
+      "name": "ArrDelay.type",
+      "passed": true,
+      "details": "invalid=0"
+    },
+    {
+      "name": "ArrDelay.integer",
+      "passed": true,
+      "details": "non_integer=0"
+    },
+    {
+      "name": "ArrDelay.minimum",
+      "passed": true,
+      "details": "below=0"
+    },
+    {
+      "name": "ArrDelay.maximum",
+      "passed": true,
+      "details": "above=0"
+    },
+    {
+      "name": "FlightDate.chronological_order",
+      "passed": true,
+      "details": "rows must be sorted by event time"
+    },
+    {
+      "name": "split.chronological_boundaries",
+      "passed": true,
+      "details": "max(train) < min(validation) <= max(validation) < min(test)"
+    }
+  ],
+  "split": {
+    "policy": "chronological-60-20-20-by-date",
+    "target": "ArrDelay >= 15",
+    "train": {
+      "rows": 27436,
+      "start": "2026-01-01",
+      "end": "2026-02-05",
+      "positive_rate": 0.2067
+    },
+    "validation": {
+      "rows": 8867,
+      "start": "2026-02-06",
+      "end": "2026-02-16",
+      "positive_rate": 0.1486
+    },
+    "test": {
+      "rows": 9651,
+      "start": "2026-02-17",
+      "end": "2026-02-28",
+      "positive_rate": 0.261
+    },
+    "ordered": true
+  }
+}

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import joblib
+import numpy as np
 import pandas as pd
 
 from mlops_flight_delay.train import FEATURES
@@ -63,6 +64,19 @@ def validate_candidate_inputs(
     }
 
 
+def check_independent_approval(registered_by: str, approved_by: str, *, drill: bool) -> str:
+    """Return the review kind; refuse self-approval unless it is an explicit training drill."""
+    if not approved_by.strip():
+        raise ValueError("approved_by must name the reviewer")
+    if approved_by.strip().lower() != registered_by.strip().lower():
+        return "independent"
+    if drill:
+        return "self-drill"
+    raise ValueError(
+        f"approver {approved_by!r} registered this candidate; an independent reviewer is required"
+    )
+
+
 def build_release_manifest(
     *,
     model_name: str,
@@ -75,6 +89,7 @@ def build_release_manifest(
     roc_auc: float,
     status: str,
     approved_by: str,
+    review: str = "independent",
 ) -> dict[str, Any]:
     return {
         "schema_version": "1.0.0",
@@ -93,7 +108,7 @@ def build_release_manifest(
             "minimum_roc_auc": minimum_roc_auc,
             "roc_auc": roc_auc,
         },
-        "decision": {"status": status, "approved_by": approved_by},
+        "decision": {"status": status, "approved_by": approved_by, "review": review},
     }
 
 
@@ -110,9 +125,16 @@ def _smoke_registry_model(model_uri: str, data_path: Path) -> None:
 
     data = pd.read_csv(data_path)
     model = mlflow.pyfunc.load_model(model_uri)
-    predictions = model.predict(data[FEATURES].head(5))
-    if len(predictions) == 0:
-        raise ValueError("Registry model smoke prediction returned no values")
+    probabilities = np.asarray(model.predict(data[FEATURES].head(5)), dtype=float)
+    check_probability_output(probabilities, rows=min(5, len(data)))
+
+
+def check_probability_output(probabilities: np.ndarray, *, rows: int) -> None:
+    """Registry models must return class probabilities: shape (rows, 2), finite, in [0, 1]."""
+    if probabilities.shape != (rows, 2):
+        raise ValueError(f"Expected probabilities of shape ({rows}, 2), got {probabilities.shape}")
+    if not np.isfinite(probabilities).all() or ((probabilities < 0) | (probabilities > 1)).any():
+        raise ValueError("Registry model returned probabilities outside [0, 1]")
 
 
 def register_candidate(args: argparse.Namespace) -> dict[str, Any]:
@@ -133,7 +155,7 @@ def register_candidate(args: argparse.Namespace) -> dict[str, Any]:
     bundle = joblib.load(args.model)
     data = pd.read_csv(args.data)
     input_example = data[bundle["features"]].head(5)
-    output_example = bundle["model"].predict_proba(input_example)[:, 1]
+    output_example = bundle["model"].predict_proba(input_example)
     signature = infer_signature(input_example, output_example)
 
     mlflow.set_tracking_uri(args.tracking_uri)
@@ -153,6 +175,8 @@ def register_candidate(args: argparse.Namespace) -> dict[str, Any]:
             name="model",
             signature=signature,
             input_example=input_example,
+            # pyfunc must serve what the signature declares: probabilities, not class labels.
+            pyfunc_predict_fn="predict_proba",
             # MLflow 3.17 serializes sklearn models with skops and refuses to load tree nodes
             # unless they are trusted explicitly. The model is trained by this pipeline, so the
             # single reviewed type is trusted instead of switching back to pickle.
@@ -169,6 +193,7 @@ def register_candidate(args: argparse.Namespace) -> dict[str, Any]:
         "data_sha256": gate["data_sha256"],
         "quality_report": args.output.as_posix(),
         "owner_team": args.owner_team,
+        "registered_by": args.registered_by,
         "release_status": "candidate",
         "test_roc_auc": str(gate["roc_auc"]),
         "minimum_roc_auc": str(gate["minimum_roc_auc"]),
@@ -215,6 +240,9 @@ def promote_candidate(args: argparse.Namespace) -> dict[str, Any]:
     if candidate.tags.get("validation_status") != "passed":
         raise ValueError("candidate does not have validation_status=passed")
     reviewed_version = str(candidate.version)
+    review = check_independent_approval(
+        candidate.tags.get("registered_by", "unknown"), args.approved_by, drill=args.drill
+    )
     champion = _alias_or_none(client, args.model_name, "champion")
     previous = str(champion.version) if champion is not None else None
 
@@ -228,6 +256,7 @@ def promote_candidate(args: argparse.Namespace) -> dict[str, Any]:
         raise RuntimeError("champion alias verification failed")
     client.set_model_version_tag(args.model_name, reviewed_version, "release_status", "approved")
     client.set_model_version_tag(args.model_name, reviewed_version, "approved_by", args.approved_by)
+    client.set_model_version_tag(args.model_name, reviewed_version, "review", review)
 
     manifest = build_release_manifest(
         model_name=args.model_name,
@@ -240,6 +269,7 @@ def promote_candidate(args: argparse.Namespace) -> dict[str, Any]:
         roc_auc=float(resolved.tags["test_roc_auc"]),
         status="approved",
         approved_by=args.approved_by,
+        review=review,
     )
     _write_json(args.output, manifest)
     return manifest
@@ -293,6 +323,7 @@ def _parser() -> argparse.ArgumentParser:
     register.add_argument("--summary", type=Path, required=True)
     register.add_argument("--source-commit", required=True)
     register.add_argument("--minimum-roc-auc", type=float, default=0.5)
+    register.add_argument("--registered-by", default="unknown", help="GitHub login автора")
     register.add_argument("--output", type=Path, required=True)
     register.set_defaults(handler=register_candidate)
 
@@ -301,6 +332,11 @@ def _parser() -> argparse.ArgumentParser:
     promote.add_argument("--model-name", required=True)
     promote.add_argument("--data", type=Path, required=True)
     promote.add_argument("--approved-by", required=True)
+    promote.add_argument(
+        "--drill",
+        action="store_true",
+        help="учебная отработка: разрешить одобрение автором, отметить review=self-drill",
+    )
     promote.add_argument("--output", type=Path, required=True)
     promote.set_defaults(handler=promote_candidate)
 

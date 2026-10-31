@@ -1,0 +1,8 @@
+{
+  "schema_version": "1.0.0",
+  "created_at": "2026-10-28T16:21:47.513404+00:00",
+  "status": "failed",
+  "command": "promote",
+  "error_type": "ValueError",
+  "message": "approver 'ESKoVV' registered this candidate; an independent reviewer is required"
+}

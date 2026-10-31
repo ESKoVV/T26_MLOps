@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0.0",
+  "created_at": "2026-10-28T16:22:00.435239+00:00",
+  "model_name": "team-3-flight-delay-classifier",
+  "from_version": "2",
+  "target_version": "1",
+  "resolved_model_uri": "models:/team-3-flight-delay-classifier/1",
+  "reason": "controlled-drill",
+  "approved_by": "ESKoVV",
+  "smoke_passed": true
+}

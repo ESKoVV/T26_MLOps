@@ -1,0 +1,13 @@
+{
+  "model_path": "models/lr10-b.joblib",
+  "rows": 9651,
+  "threshold": 0.5,
+  "minimum_roc_auc": 0.55,
+  "metrics": {
+    "roc_auc": 0.6311192536275625,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+  },
+  "passed": true
+}

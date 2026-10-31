@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "status": "candidate",
+  "model_name": "team-3-flight-delay-classifier",
+  "model_version": "1",
+  "model_uri": "models:/team-3-flight-delay-classifier/1",
+  "mlflow_run_id": "674de9fa758d460b8df38d066c4ab1b2",
+  "source_commit": "5a25637d740bb4ad65c4d9d3ec6dc4ddb116fb02",
+  "data_sha256": "78721daf85b396674e95464ca6aae151dedc7db86c480d5aef881ab4187fcace",
+  "quality_gate": {
+    "passed": true,
+    "roc_auc": 0.6312842364379566,
+    "minimum_roc_auc": 0.55,
+    "data_sha256": "78721daf85b396674e95464ca6aae151dedc7db86c480d5aef881ab4187fcace"
+  },
+  "tags": {
+    "validation_status": "passed",
+    "source_commit": "5a25637d740bb4ad65c4d9d3ec6dc4ddb116fb02",
+    "data_sha256": "78721daf85b396674e95464ca6aae151dedc7db86c480d5aef881ab4187fcace",
+    "quality_report": "reports/registry/lr10-candidate-a.json",
+    "owner_team": "team-3",
+    "registered_by": "ESKoVV",
+    "release_status": "candidate",
+    "test_roc_auc": "0.6312842364379566",
+    "minimum_roc_auc": "0.55"
+  }
+}

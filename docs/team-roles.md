@@ -7,14 +7,15 @@
 
 | Участник | GitHub login | Ветка в fork-е тимлида |
 |---|---|---|
-| Потапов Глеб | уточняется | `student-01` |
 | Еськов Владимир | @ESKoVV | `student-02` |
 | Буланов Родион | @Babidjon1337 | `student-03` |
-| Борисовский Максим | уточняется | `student-04` |
-| Кавалеристова София | уточняется | `student-05` |
+| Борисовский Максим | @HollowInsideBro | `student-04` |
+| Кавалеристова София | @KavaleristovaSofia | `student-05` |
 
 Участник делает fork своей ветки, работает в своём `main` и открывает PR в `ESKoVV:student-XX`.
 Тимлид работает в ветке задачи и открывает PR в `student-02`, затем `student-XX` → `main`.
+
+Потапов Глеб выбыл из команды (2026-10-28); ветка `student-01` не используется.
 
 ## Роли по лабораторным
 
@@ -22,7 +23,6 @@
 |---|---|---|---|---|
 | 1 | Еськов Владимир | Release lead, repository administrator | #1 | PR в `student-02`, CODEOWNERS, ADR 0001, правила `main`, tag `lr1-v1` |
 | 1 | Буланов Родион | Environment engineer | назначается | проверка установки по README на чистой машине |
-| 1 | Потапов Глеб | Quality engineer | назначается | review PR и проверка CI |
 | 1 | Борисовский Максим | Documentation and risk reviewer | назначается | review ADR 0001 и CONTRIBUTING |
 | 1 | Кавалеристова София | Documentation and risk reviewer | назначается | review README и `.gitignore` |
 
