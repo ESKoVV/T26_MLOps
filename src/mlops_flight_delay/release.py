@@ -26,6 +26,26 @@ def _safe_evidence_path(root: Path, relative: str) -> Path:
     return candidate
 
 
+NOT_PASSING_EVIDENCE = {"fail", "failed", "review", "quality_breach", "insufficient_evidence"}
+
+
+def _check_claim_against_evidence(name: str, claimed: str, evidence_path: Path) -> None:
+    """A gate may not claim 'pass' when its JSON evidence reports a failing status."""
+    if claimed != "pass" or evidence_path.suffix != ".json":
+        return
+    payload = json.loads(evidence_path.read_text(encoding="utf-8"))
+    reported = payload.get("status") if isinstance(payload, dict) else None
+    if isinstance(reported, str) and reported.lower() in NOT_PASSING_EVIDENCE:
+        raise ValueError(
+            f"Gate {name} заявлен как pass, но evidence сообщает status={reported}; "
+            "используйте accepted_with_investigation с исключением"
+        )
+
+
+def _same_person(first: Any, second: Any) -> bool:
+    return str(first or "").strip().lower() == str(second or "").strip().lower()
+
+
 def _validate_image_ref(image_ref: str, source_commit: str) -> None:
     if image_ref.endswith(":latest"):
         raise ValueError("Плавающий tag latest запрещён")
@@ -64,11 +84,13 @@ def build_release_manifest(
         status = gate["status"]
         if status not in policy["allowed_gate_statuses"]:
             raise ValueError(f"Недопустимый статус gate {name}: {status}")
+        evidence_path = _safe_evidence_path(root, gate["path"])
+        _check_claim_against_evidence(name, status, evidence_path)
         item: dict[str, Any] = {
             "name": name,
             "status": status,
             "path": gate["path"],
-            "sha256": sha256_file(_safe_evidence_path(root, gate["path"])),
+            "sha256": sha256_file(evidence_path),
         }
         if status == "accepted_with_investigation":
             exception = gate.get("exception") or {}
@@ -82,8 +104,8 @@ def build_release_manifest(
         evidence.append(item)
 
     approvals = spec["approvals"]
-    independent_approval = bool(approvals.get("approved_by")) and (
-        approvals.get("approved_by") != approvals.get("prepared_by")
+    independent_approval = bool(str(approvals.get("approved_by") or "").strip()) and not (
+        _same_person(approvals.get("approved_by"), approvals.get("prepared_by"))
     )
     ci_success = spec["ci"]["status"] == "success" and bool(spec["ci"].get("run_url"))
     if ci_success and independent_approval:

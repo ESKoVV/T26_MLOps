@@ -25,3 +25,4 @@ reports/features/lr13-bts/*.csv
 reports/features/lr13-ci/
 data/governance/bts_evaluation.csv
 reports/governance/lr14-ci.json
+!reports/releases/lr16-manifest.json
