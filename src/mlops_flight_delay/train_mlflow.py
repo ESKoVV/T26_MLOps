@@ -13,6 +13,7 @@ import mlflow.data
 import pandas as pd
 from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
 
+from mlops_flight_delay.split import SPLIT_POLICY, chronological_bounds, sort_by_event_time
 from mlops_flight_delay.train import FEATURES, train_model
 from mlops_flight_delay.validate_data import validate_dataset
 
@@ -48,11 +49,8 @@ def run_experiment(
     if not validation["passed"]:
         raise ValueError("Набор не прошёл контракт данных")
 
-    frame = pd.read_csv(data_path)
-    frame["FlightDate"] = pd.to_datetime(frame["FlightDate"], errors="raise")
-    frame = frame.sort_values("FlightDate").reset_index(drop=True)
-    train_end = int(len(frame) * 0.6)
-    validation_end = int(len(frame) * 0.8)
+    frame = sort_by_event_time(pd.read_csv(data_path))
+    train_end, validation_end = chronological_bounds(frame["FlightDate"])
     train_frame = frame.iloc[:train_end].copy()
     validation_frame = frame.iloc[train_end:validation_end].copy()
     validation_target = (validation_frame["ArrDelay"] >= 15).astype(int)
@@ -84,7 +82,7 @@ def run_experiment(
             "validation_f1": float(f1_score(validation_target, predictions, zero_division=0)),
         }
         split_manifest = {
-            "policy": "chronological-60-20-20",
+            "policy": SPLIT_POLICY,
             "rows": len(frame),
             "train_rows": train_end,
             "validation_rows": validation_end - train_end,
@@ -125,7 +123,7 @@ def run_experiment(
                     "max_depth": max_depth,
                     "random_state": random_state,
                     "target_threshold_minutes": 15,
-                    "split_policy": "chronological-60-20-20",
+                    "split_policy": SPLIT_POLICY,
                 }
             )
             mlflow.log_metrics(metrics)
@@ -138,7 +136,7 @@ def run_experiment(
                     "data.dvc_hash": _dvc_hash(data_path),
                     "data.sha256": hashlib.sha256(data_path.read_bytes()).hexdigest(),
                     "data.contract_version": validation["contract_version"],
-                    "split.policy": "chronological-60-20-20",
+                    "split.policy": SPLIT_POLICY,
                     "validation.status": "candidate",
                 }
             )

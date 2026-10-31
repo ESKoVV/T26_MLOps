@@ -14,3 +14,5 @@ models/*.joblib
 reports/validation/
 reports/tests/
 reports/openapi/ci-openapi.json
+data/raw/
+data/processed/
